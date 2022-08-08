@@ -5,14 +5,30 @@ const { app, BrowserWindow, Tray, Menu } = require('electron')
 const path = require('path')
 const request = require('request');
 const https = require('https')
-
-var Mdns = require('mdns-discovery');
+var mdns = require('multicast-dns')()
 const { fileURLToPath } = require('url');
 
 const refreshContextMenuMs = 30000; // time between context menu refreshes
 
 // should additional menu section for sending bulb commands be added? 
 const irBulbsInContextMenu = false;
+
+
+// Mdns handling
+mdns.on('response', function (response) {
+  // console.log('got a response packet:', response)
+})
+
+mdns.on('query', function (query) {
+  // console.log('got a query packet:', query)
+})
+
+
+// questions:[{
+//   name: '_http._tcp',
+//   type: 'A'
+
+// query mdns to find nodes in network
 
 
 
@@ -51,10 +67,12 @@ app.whenReady().then(() => {
 
   // discover nodes in network
   // nodes = searchForNodes();
+  console.log('sending query...')
+  mdns.query([{ name: '_http._tcp', type: 'A' }])
 
   nodes = [
     "http://192.168.1.33/", // biurko
-    "http://192.168.1.41/", // master
+    // "http://192.168.1.41/", // master
     "http://192.168.1.59/", // nad tv
     // "http://192.168.1.42/" // pod tv
   ];
@@ -64,7 +82,6 @@ app.whenReady().then(() => {
   tray = new Tray('images/icon.png')
 
   // setInterval(refreshContextMenu(tray), refreshContextMenuMs);
-
 
   // ask discovered nodes about required info and populate interface once all responses are received
   askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
@@ -169,7 +186,6 @@ function populateContextMenu(allNodes, tray) {
   // construct menu template, first level: module names, loop iterates through each node
   for (let i = 0; i < allNodes.length; i++) {
 
-
     // add all node names
     menuTemplate.push(
       {
@@ -178,7 +194,6 @@ function populateContextMenu(allNodes, tray) {
         submenu: []
       }
     )
-
 
     // add inactive label with information that those are presets
     menuTemplate[i].submenu.push(
@@ -223,11 +238,32 @@ function populateContextMenu(allNodes, tray) {
         type: 'normal',
         enabled: false
       },
-      // {
-      //   label: '♻ Sync others',
-      //   type: 'checkbox',
-      //   checked: false, // current status has to be requested from node
-      // },
+      { // todo, get current state of sychronization option and populate its stats
+        label: '♻ Sync others',
+        type: 'checkbox',
+        checked: false, // current status has to be requested from node
+        click() {
+          console.log("synchronization option requested");
+          // send request populate status of synchronization option
+
+          request.post(
+            allNodes[i].address + '/json/si',
+            {
+              json: {
+                "udpn": {
+                  "send": true,
+                }
+              }
+            },
+            function (error, response, body) {
+              if (error) throw error;
+              if (!error && response.statusCode == 200) {
+                console.log("200 Successfully changed synchronization option");
+              }
+            }
+          );
+        }
+      },
       {
         label: '🔦 Toggle power',
         type: 'normal',

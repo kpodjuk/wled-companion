@@ -22,7 +22,8 @@
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
-    "mdns-discovery": "^0.2.6"
+    "mdns-discovery": "^0.2.6",
+    "multicast-dns": "^7.2.5"
   },
   "config": {
     "forge": {
