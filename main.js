@@ -1,5 +1,5 @@
 // main.js
-
+// nodemon --exec npm run start
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, Tray, Menu } = require('electron')
 const path = require('path')
@@ -101,18 +101,19 @@ function askAllNodesForInfoAndUpdateContextMenu(adressList = [], tray) {
   for (let i = 0; i < nodeCount; i++) {
     currentAddress = adressList[i];
 
-    // ask for name
+    // ask for name and synch button status
     request.get(
-      currentAddress + 'json/info',
+      currentAddress + 'json',
       function (error, response, body) {
         if (error) throw error
         if (!error && response.statusCode == 200) {
-
+          // printjson(body);
           const jsonObject = JSON.parse(body);
           nodesInfoArray.push({
             id: nodesInfoArray.length, // not sure if needed
-            name: jsonObject['name'],
+            name: jsonObject['info']['name'],
             address: response.request.uri.protocol + '//' + response.request.host,
+            synchState : jsonObject['state']['udpn'],
             avaliablePresets: []
           });
 
@@ -228,6 +229,9 @@ function populateContextMenu(allNodes, tray) {
       })
     }
 
+    // assign synchState to variable
+    let currentSynchState = allNodes[i].synchState.send;
+
     // add additional section with settings that are the same for every module
     menuTemplate[i].submenu.push(
       {
@@ -238,10 +242,10 @@ function populateContextMenu(allNodes, tray) {
         type: 'normal',
         enabled: false
       },
-      { // todo, get current state of sychronization option and populate its stats
+      { 
         label: '♻ Sync others',
         type: 'checkbox',
-        checked: false, // current status has to be requested from node
+        checked: currentSynchState, // current status has to be requested from node
         click() {
           console.log("synchronization option requested");
           // send request populate status of synchronization option
@@ -251,7 +255,7 @@ function populateContextMenu(allNodes, tray) {
             {
               json: {
                 "udpn": {
-                  "send": true,
+                  "send": currentSynchState = !currentSynchState,
                 }
               }
             },
