@@ -11,6 +11,8 @@ const { fileURLToPath } = require('url');
 
 const refreshContextMenuMs = 30000; // time between context menu refreshes
 
+// should additional menu section for sending bulb commands be added? 
+const irBulbsInContextMenu = false;
 
 
 
@@ -28,7 +30,7 @@ app.setUserTasks([
 
 function refreshContextMenu(tray) {
 
-  askNodesForInfo(nodes, tray)
+  askAllNodesForInfoAndUpdateContextMenu(nodes, tray)
 }
 
 // function sleep(ms) {
@@ -64,68 +66,17 @@ app.whenReady().then(() => {
   // setInterval(refreshContextMenu(tray), refreshContextMenuMs);
 
 
-
-
   // ask discovered nodes about required info and populate interface once all responses are received
-  askNodesForInfo(nodes, tray);
-
-
-  // const contextMenu = Menu.buildFromTemplate([
-  //   { label: 'Loading avaliable nodes...' },
-
-  //   { type: 'separator' },
-
-  //   {
-  //     label: 'Żarówki', type: 'submenu', submenu: [
-  //       {
-  //         label: '🔵 Niebieski ', type: 'normal',
-  //         click() {
-  //           sendIrCommand('07');
-  //         }
-  //       },
-  //       {
-  //         label: '🔴 Czerwony', type: 'normal',
-  //         click() {
-  //           sendIrCommand('05');
-  //         }
-  //       },
-  //       {
-  //         label: '🟡 Żółty', type: 'normal',
-  //         click() {
-  //           sendIrCommand('13');
-  //         }
-  //       },
-  //       // { label: '🔴 ', type: 'normal' },
-  //       { type: 'separator' },
-  //       { label: '⚡ Wyłącz', type: 'normal' },
-  //       { label: '⚡ Włącz', type: 'normal' },
-  //       { type: 'separator' },
-  //       { label: '🌕 Jaśniej', type: 'normal' },
-  //       { label: '🌒 Ciemniej', type: 'normal' },
-
-  //       // sendIrCommand('red')
-
-  //     ]
-  //   },
-  //   { type: 'separator' },
-  //   {
-  //     label: 'Wyjdź',
-  //     click() {
-  //       app.quit()
-  //     }
-  //   }
-  // ])
+  askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
 
   // tray.setToolTip('WLED companion')
   // tray.setContextMenu(contextMenu)
-
-
 
 })
 
 
 
-function askNodesForInfo(adressList = [], tray) {
+function askAllNodesForInfoAndUpdateContextMenu(adressList = [], tray) {
   var nodesInfoArray = []; // array of objects with info about nodes
   nodeCount = adressList.length;
 
@@ -210,23 +161,39 @@ function askNodesForInfo(adressList = [], tray) {
 
 
 function populateContextMenu(allNodes, tray) {
-  // console.log("Got all node info, populating interface with: ");
-  // console.log(JSON.stringify(allNodes, null, 2));
+  console.log("Got all node info, populating interface with: ");
+  console.log(JSON.stringify(allNodes, null, 2));
+  console.log('-----------------------INTERFACE POPULATED-----------------------------');
   let menuTemplate = [];
 
-  // construct menu template, first level: module names
+  // construct menu template, first level: module names, loop iterates through each node
   for (let i = 0; i < allNodes.length; i++) {
-    menuTemplate.push({
-      label: allNodes[i].name,
-      type: 'submenu',
-      submenu: []
 
-    })
 
-    // construct menu template, second level: presets
+    // add all node names
+    menuTemplate.push(
+      {
+        label: '💡 ' + allNodes[i].name, // here you populate module name
+        type: 'submenu',
+        submenu: []
+      }
+    )
+
+
+    // add inactive label with information that those are presets
+    menuTemplate[i].submenu.push(
+      {
+        label: 'Avaliable presets: ',
+        type: 'normal',
+        enabled: false
+      }
+    )
+
+    // construct menu template, second level: presets and specific node settings
     for (let j = 0; j < allNodes[i].avaliablePresets.length; j++) {
+
       menuTemplate[i].submenu.push({
-        label: allNodes[i].avaliablePresets[j].name,
+        label: '📜 ' + allNodes[i].avaliablePresets[j].name, // here you populate preset name
         type: 'normal',
         click() {
           console.log("preset choosen: " + allNodes[i].avaliablePresets[j].name);
@@ -246,28 +213,103 @@ function populateContextMenu(allNodes, tray) {
       })
     }
 
-  }
-  // console.log("before")
-  // printjson(menuTemplate);
+    // add additional section with settings that are the same for every module
+    menuTemplate[i].submenu.push(
+      {
+        type: 'separator',
+      },
+      {
+        label: 'Settings: ',
+        type: 'normal',
+        enabled: false
+      },
+      // {
+      //   label: '♻ Sync others',
+      //   type: 'checkbox',
+      //   checked: false, // current status has to be requested from node
+      // },
+      {
+        label: '🔦 Toggle power',
+        type: 'normal',
+        click() {
+          // send request to correct address
+          let requestAddress = allNodes[i].address + '/win&T=2'; // 2 = toggle
+          console.log('sending toggle request to: ' + requestAddress);
+          request.get(
+            requestAddress,
+            function (error, response, body) {
+              if (error) throw error;
+              if (!error && response.statusCode == 200) {
+                console.log('request good, address: ' + allNodes[i].address);
+              }
+            }
+          );
+        }
+      }
+    );
 
-  // add last section to menu template
+  }
+
+  // add section with quit button
   menuTemplate.push(
     { type: 'separator' },
     {
-      label: 'Quit',
+      label: '❌ Quit',
       click() {
         app.quit()
       }
     }
   )
-  // console.log("after")
-
-  // printjson(menuTemplate);
 
 
+  // Very first element, inactive label with description that those are nodes, added to top of menu
+  menuTemplate.unshift(
+    {
+      label: 'Detected nodes: ',
+      type: 'normal',
+      enabled: false
+    }
+  )
 
 
-  // apply menu template to tray
+  // add optional section with bulb settings, doesn't work yet
+  if (irBulbsInContextMenu) {
+    // { type: 'separator' },
+    // {
+    //   label: 'Żarówki', type: 'submenu', submenu: [
+    //     {
+    //       label: '🔵 Niebieski ', type: 'normal',
+    //       click() {
+    //         sendIrCommand('07');
+    //       }
+    //     },
+    //     {
+    //       label: '🔴 Czerwony', type: 'normal',
+    //       click() {
+    //         sendIrCommand('05');
+    //       }
+    //     },
+    //     {
+    //       label: '🟡 Żółty', type: 'normal',
+    //       click() {
+    //         sendIrCommand('13');
+    //       }
+    //     },
+    //     // { label: '🔴 ', type: 'normal' },
+    //     { type: 'separator' },
+    //     { label: '⚡ Wyłącz', type: 'normal' },
+    //     { label: '⚡ Włącz', type: 'normal' },
+    //     { type: 'separator' },
+    //     { label: '🌕 Jaśniej', type: 'normal' },
+    //     { label: '🌒 Ciemniej', type: 'normal' },
+
+    //     // sendIrCommand('red')
+    //   ]
+    // }
+  }
+
+
+  // apply prepared menu template to tray
   const contextMenu = Menu.buildFromTemplate(menuTemplate);
   tray.setToolTip('WLED companion')
   tray.setContextMenu(contextMenu)
@@ -285,6 +327,7 @@ function sendIrCommand(command) {
     'http://192.168.1.41/json/si',
     { json: { "bulbCommand": command } },
     function (error, response, body) {
+      if (error) throw error;
       if (!error && response.statusCode == 200) {
       }
     }
