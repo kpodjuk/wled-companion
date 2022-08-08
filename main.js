@@ -210,13 +210,12 @@ function askNodesForInfo(adressList = [], tray) {
 
 
 function populateContextMenu(allNodes, tray) {
-  console.log("Got all node info, populating interface with: ");
-  console.log(JSON.stringify(allNodes, null, 2));
+  // console.log("Got all node info, populating interface with: ");
+  // console.log(JSON.stringify(allNodes, null, 2));
   let menuTemplate = [];
 
   // construct menu template, first level: module names
   for (let i = 0; i < allNodes.length; i++) {
-
     menuTemplate.push({
       label: allNodes[i].name,
       type: 'submenu',
@@ -224,47 +223,58 @@ function populateContextMenu(allNodes, tray) {
 
     })
 
-    // console.log(JSON.stringify(menuTemplate, null, 2));
-
-    // console.log("------------------------------");
-
-
     // construct menu template, second level: presets
-
     for (let j = 0; j < allNodes[i].avaliablePresets.length; j++) {
       menuTemplate[i].submenu.push({
         label: allNodes[i].avaliablePresets[j].name,
         type: 'normal',
         click() {
           console.log("preset choosen: " + allNodes[i].avaliablePresets[j].name);
-          console.log("for node:")
-          console.log(allNodes[i])
+          console.log("for node:" + allNodes[i].name)
+
+          // send request to switch preset to node
+          request.get(
+            allNodes[i].address + '/win&PL=' + allNodes[i].avaliablePresets[j].id,
+            (error, response, body) => {
+              if (error) throw error
+              if (!error && response.statusCode == 200) {
+                console.log("Successfully switched preset:");
+                console.log(allNodes[i].address + '/win&PL=' + allNodes[i].avaliablePresets[j].id)
+              }
+            })
         }
       })
     }
 
-
-
-    // console.log(JSON.stringify(menuTemplate, null, 2));
-
-
-    // [
-    //   { label: contextMenuCounter },
-    //   { type: 'separator' },
-    //   {
-    //     label: 'Wyjdź',
-    //     click() {
-    //       app.quit()
-    //     }
-    //   }
-    // ]
-
   }
+  // console.log("before")
+  // printjson(menuTemplate);
 
+  // add last section to menu template
+  menuTemplate.push(
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click() {
+        app.quit()
+      }
+    }
+  )
+  // console.log("after")
+
+  // printjson(menuTemplate);
+
+
+
+
+  // apply menu template to tray
   const contextMenu = Menu.buildFromTemplate(menuTemplate);
-
   tray.setToolTip('WLED companion')
   tray.setContextMenu(contextMenu)
+}
+
+function printjson(json) {
+  console.log(JSON.stringify(json, null, 2));
 }
 
 function sendIrCommand(command) {
@@ -309,38 +319,9 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
-
-
-function searchForNodes() {
-  // look for available modules on network via mdns-disovery
-
-  // console.log("Looking for modules in network...");
-
-  //   var mdns = new Mdns({ timeout: 4 });
-
-
-  // mdns.run (function(res) {
-  //        console.log(res);
-  // });
+    // In this file you can include the rest of your app's specific main process
+    // code. You can also put them in separate files and require them here.
 
 
 
-  // const firstModuleIp = 'http://192.168.1.41/';
-
-  // console.log('Asking for nodes on ' + firstModuleIp)
-
-  // request.get(
-  //   firstModuleIp + 'json/info',
-  //   function (error, response, body) {
-  //     if (!error && response.statusCode == 200) {
-  //       const jsonObject = JSON.parse(body);
-  //       console.log("Found " + jsonObject.ndc + " additional nodes")
-  //     }
-  //   }
-  // );
-
-
-}
 
