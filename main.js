@@ -1,14 +1,12 @@
 // main.js
-// nodemon --exec npm run start
+// to run: nodemon --exec npm run start
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, Tray, Menu } = require("electron");
 const path = require("path");
 const request = require("request");
-const https = require("https");
 const shell = require("electron").shell;
 
 var mdns = require("multicast-dns")();
-const { fileURLToPath } = require("url");
 
 const refreshContextMenuMs = 30000; // time between context menu refreshes
 
@@ -61,18 +59,18 @@ app.whenReady().then(() => {
 
   // discover nodes in network
   // nodes = searchForNodes();
-  console.log("sending query...");
+  console.log("Trying to discover nodes...");
   mdns.query([{ name: "_http._tcp", type: "A" }]);
 
   nodes = [
     "http://192.168.1.33/", // biurko
-    // "http://192.168.1.41/", // master
+    "http://192.168.1.41/", // master
     "http://192.168.1.59/", // nad tv
-    // "http://192.168.1.42/" // pod tv
+    "http://192.168.1.42/", // pod tv
   ];
 
   // create tray icon
-  tray = new Tray("images/icon.png");
+  tray = new Tray("images/bulb-icon.png");
 
   // setInterval(refreshContextMenu(tray), refreshContextMenuMs);
 
@@ -113,7 +111,6 @@ function askAllNodesForInfoAndUpdateContextMenu(adressList = [], tray) {
               request.get(currentAddress, function (error, response, body) {
                 if (!error && response.statusCode == 200) {
                   const bodyObject = JSON.parse(body);
-
                   let presetIds = Object.keys(bodyObject);
                   let presetArray = [];
 
@@ -153,6 +150,7 @@ function askAllNodesForInfoAndUpdateContextMenu(adressList = [], tray) {
                     if (element.avaliablePresets.length == 0) {
                       // if any element has empty array, set flag to true
                       stillNotComplete = true;
+                      // probably should be handled differently, via promise->then or something
                     }
                   });
                   if (stillNotComplete == false) {
@@ -169,7 +167,7 @@ function askAllNodesForInfoAndUpdateContextMenu(adressList = [], tray) {
 }
 
 function populateContextMenu(allNodes, tray) {
-  console.log("Got all node info, populating interface with: ");
+  console.log("🟢 Got all node info, populating interface with: ");
   console.log(JSON.stringify(allNodes, null, 2));
   console.log(
     "-----------------------INTERFACE POPULATED-----------------------------"
@@ -180,7 +178,7 @@ function populateContextMenu(allNodes, tray) {
   for (let i = 0; i < allNodes.length; i++) {
     // add all node names
     menuTemplate.push({
-      label: "💡 " + allNodes[i].name, // here you populate module name
+      label: "💡 " + allNodes[i].name, // here you populate node name
       type: "submenu",
       submenu: [],
     });
@@ -211,7 +209,7 @@ function populateContextMenu(allNodes, tray) {
             (error, response, body) => {
               if (error) throw error;
               if (!error && response.statusCode == 200) {
-                console.log("Successfully switched preset:");
+                console.log("🟢 200 Successfully switched preset:");
                 console.log(
                   allNodes[i].address +
                     "/win&PL=" +
@@ -242,9 +240,7 @@ function populateContextMenu(allNodes, tray) {
         type: "checkbox",
         checked: currentSynchState, // current status has to be requested from node
         click() {
-          console.log("synchronization option requested");
           // send request populate status of synchronization option
-
           request.post(
             allNodes[i].address + "/json/si",
             {
@@ -257,7 +253,9 @@ function populateContextMenu(allNodes, tray) {
             function (error, response, body) {
               if (error) throw error;
               if (!error && response.statusCode == 200) {
-                console.log("200 Successfully changed synchronization option");
+                console.log(
+                  "🟢 200 Successfully changed synchronization option"
+                );
               }
             }
           );
@@ -273,7 +271,7 @@ function populateContextMenu(allNodes, tray) {
           request.get(requestAddress, function (error, response, body) {
             if (error) throw error;
             if (!error && response.statusCode == 200) {
-              console.log("request good, address: " + allNodes[i].address);
+              console.log("🟢 200 toggled power for: " + allNodes[i].address);
             }
           });
         },
@@ -389,6 +387,3 @@ const createWindow = () => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
