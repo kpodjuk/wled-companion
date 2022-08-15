@@ -1,19 +1,34 @@
-// main.js
-// to run: nodemon --exec npm run start
+// to run:
+// nodemon --exec npm run start
+// to build:
+// npm install --save-dev @electron-forge/cli
+// npx electron-forge import
+// electron-forge make
+
+// constant parameters
+const refreshContextMenuMs = 30000; // time between context menu refreshes
+const irBulbsInContextMenu = false; // should additional menu section for sending bulb commands be added?
+const motionSensingContextMenu = false;
+const DEBUGENABLED = true; // is application debug enabled?
+const trayIconPath = "images/bulb-icon.png";
+const brightnessStepSize = 70; // step size when using "brightness up" and "brightness down" buttons
+const nodes = [
+  "http://192.168.1.33/", // biurko
+  // "http://192.168.1.41/", // master
+  "http://192.168.1.59/", // nad tv
+  // "http://192.168.1.42/", // pod tv
+];
+
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, Tray, Menu } = require("electron");
 const path = require("path");
 const request = require("request");
+const { markAsUntransferable } = require("worker_threads");
 const shell = require("electron").shell;
-
+var colors = require("colors");
 var mdns = require("multicast-dns")();
 
-const refreshContextMenuMs = 30000; // time between context menu refreshes
-
-// should additional menu section for sending bulb commands be added?
-const irBulbsInContextMenu = false;
-
-// Mdns handling
+// MDNS handling
 mdns.on("response", function (response) {
   // console.log('got a response packet:', response)
 });
@@ -25,8 +40,6 @@ mdns.on("query", function (query) {
 // questions:[{
 //   name: '_http._tcp',
 //   type: 'A'
-
-// query mdns to find nodes in network
 
 app.setUserTasks([
   {
@@ -54,25 +67,23 @@ function refreshContextMenu(tray) {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  // create window for initial config
-  // createWindow()
-
+  if (DEBUGENABLED) {
+    console.log("!!! Debug mode enabled !!!".blue);
+    createWindow(); // window is created only in debug mode, for easier debugging
+  }
   // discover nodes in network
   // nodes = searchForNodes();
-  console.log("Trying to discover nodes...");
+  console.log("Trying to discover nodes...".blue);
   mdns.query([{ name: "_http._tcp", type: "A" }]);
 
-  nodes = [
-    "http://192.168.1.33/", // biurko
-    "http://192.168.1.41/", // master
-    "http://192.168.1.59/", // nad tv
-    "http://192.168.1.42/", // pod tv
-  ];
-
   // create tray icon
-  tray = new Tray("images/bulb-icon.png");
+  tray = new Tray(trayIconPath);
 
-  // setInterval(refreshContextMenu(tray), refreshContextMenuMs);
+  // create interval for context menu refresh
+  // setInterval(() => {
+  //   refreshContextMenu(tray);
+  //   console.log("Refreshing context menu...");
+  // }, refreshContextMenuMs);
 
   // ask discovered nodes about required info and populate interface once all responses are received
   askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
@@ -96,10 +107,11 @@ function askAllNodesForInfoAndUpdateContextMenu(adressList = [], tray) {
         // printjson(body);
         const jsonObject = JSON.parse(body);
         nodesInfoArray.push({
-          id: nodesInfoArray.length, // not sure if needed
+          // id: nodesInfoArray.length, // not sure if needed
           name: jsonObject["info"]["name"],
           address: response.request.uri.protocol + "//" + response.request.host,
           synchState: jsonObject["state"]["udpn"],
+          brightness: jsonObject["state"]["bri"],
           avaliablePresets: [],
         });
 
@@ -167,11 +179,8 @@ function askAllNodesForInfoAndUpdateContextMenu(adressList = [], tray) {
 }
 
 function populateContextMenu(allNodes, tray) {
-  console.log("🟢 Got all node info, populating interface with: ");
+  console.log("Got all node info, populating interface with: ".green);
   console.log(JSON.stringify(allNodes, null, 2));
-  console.log(
-    "-----------------------INTERFACE POPULATED-----------------------------"
-  );
   let menuTemplate = [];
 
   // construct menu template, first level: module names, loop iterates through each node
@@ -209,9 +218,9 @@ function populateContextMenu(allNodes, tray) {
             (error, response, body) => {
               if (error) throw error;
               if (!error && response.statusCode == 200) {
-                console.log("🟢 200 Successfully switched preset:");
                 console.log(
-                  allNodes[i].address +
+                  "200 Successfully switched preset:" +
+                    allNodes[i].address +
                     "/win&PL=" +
                     allNodes[i].avaliablePresets[j].id
                 );
@@ -222,8 +231,9 @@ function populateContextMenu(allNodes, tray) {
       });
     }
 
-    // assign synchState to variable
+    // assign current state to vars
     let currentSynchState = allNodes[i].synchState.send;
+    // let currentBrightness = allNodes[i].brightness;
 
     // add additional section with settings that are the same for every module
     menuTemplate[i].submenu.push(
@@ -254,7 +264,7 @@ function populateContextMenu(allNodes, tray) {
               if (error) throw error;
               if (!error && response.statusCode == 200) {
                 console.log(
-                  "🟢 200 Successfully changed synchronization option"
+                  "200 Successfully changed synchronization option".green
                 );
               }
             }
@@ -267,21 +277,74 @@ function populateContextMenu(allNodes, tray) {
         click() {
           // send request to correct address
           let requestAddress = allNodes[i].address + "/win&T=2"; // 2 = toggle
-          console.log("sending toggle request to: " + requestAddress);
           request.get(requestAddress, function (error, response, body) {
             if (error) throw error;
             if (!error && response.statusCode == 200) {
-              console.log("🟢 200 toggled power for: " + allNodes[i].address);
+              console.log(
+                "200 Toggled power, request address: " + requestAddress
+              );
             }
           });
         },
       },
       {
-        label: "⚙️ WebService",
+        label: "⚙️ Web service",
         type: "normal",
         click() {
           // open web service in browser
           shell.openExternal(allNodes[i].address);
+        },
+      },
+      {
+        label: "🌕 Brightness up",
+        type: "normal",
+        click() {
+          allNodes[i].brightness += brightnessStepSize; // increase brightness by step size
+          // check if brightness is within limits
+          if (allNodes[i].brightness > 255) {
+            allNodes[i].brightness = 255;
+          }
+          // send request to change brightness
+          request.get(
+            allNodes[i].address + "/win&A=" + allNodes[i].brightness,
+            (error, response, body) => {
+              if (error) throw error;
+              if (!error && response.statusCode == 200) {
+                console.log(
+                  "200 Successfully sent brightness up request, request address: " +
+                    allNodes[i].address +
+                    "/win&A=" +
+                    allNodes[i].brightness
+                );
+              }
+            }
+          );
+        },
+      },
+      {
+        label: "🌒 Brightness down",
+        type: "normal",
+        click() {
+          allNodes[i].brightness -= brightnessStepSize; // increase brightness by step size
+          // check if brightness is within limits
+          if (allNodes[i].brightness < 0) {
+            allNodes[i].brightness = 0;
+          }
+          // send request to change brightness
+          request.get(
+            allNodes[i].address + "/win&A=" + allNodes[i].brightness,
+            (error, response, body) => {
+              if (error) throw error;
+              if (!error && response.statusCode == 200) {
+                console.log(
+                  "200 Successfully sent brightness up request, request address: " +
+                    allNodes[i].address +
+                    "/win&A=" +
+                    allNodes[i].brightness
+                );
+              }
+            }
+          );
         },
       }
     );
@@ -305,39 +368,49 @@ function populateContextMenu(allNodes, tray) {
     enabled: false,
   });
 
-  // add optional section with bulb settings, doesn't work yet
+  // add optional settings, probably only useful for me
   if (irBulbsInContextMenu) {
-    // { type: 'separator' },
-    // {
-    //   label: 'Żarówki', type: 'submenu', submenu: [
-    //     {
-    //       label: '🔵 Niebieski ', type: 'normal',
-    //       click() {
-    //         sendIrCommand('07');
-    //       }
-    //     },
-    //     {
-    //       label: '🔴 Czerwony', type: 'normal',
-    //       click() {
-    //         sendIrCommand('05');
-    //       }
-    //     },
-    //     {
-    //       label: '🟡 Żółty', type: 'normal',
-    //       click() {
-    //         sendIrCommand('13');
-    //       }
-    //     },
-    //     // { label: '🔴 ', type: 'normal' },
-    //     { type: 'separator' },
-    //     { label: '⚡ Wyłącz', type: 'normal' },
-    //     { label: '⚡ Włącz', type: 'normal' },
-    //     { type: 'separator' },
-    //     { label: '🌕 Jaśniej', type: 'normal' },
-    //     { label: '🌒 Ciemniej', type: 'normal' },
-    //     // sendIrCommand('red')
-    //   ]
-    // }
+    menuTemplate.unshift(
+      { type: "separator" },
+      {
+        label: "Żarówki",
+        type: "submenu",
+        submenu: [
+          {
+            label: "🔵 Niebieski ",
+            type: "normal",
+            click() {
+              sendIrCommand("07");
+            },
+          },
+          {
+            label: "🔴 Czerwony",
+            type: "normal",
+            click() {
+              sendIrCommand("05");
+            },
+          },
+          {
+            label: "🟡 Żółty",
+            type: "normal",
+            click() {
+              sendIrCommand("13");
+            },
+          },
+          // { label: '🔴 ', type: 'normal' },
+          { type: "separator" },
+          { label: "⚡ Wyłącz", type: "normal" },
+          { label: "⚡ Włącz", type: "normal" },
+          { type: "separator" },
+          { label: "🌕 Jaśniej", type: "normal" },
+          { label: "🌒 Ciemniej", type: "normal" },
+          // sendIrCommand('red')
+        ],
+      }
+    );
+  }
+  if (motionSensingContextMenu) {
+    // code for motion sensing checkbox here...
   }
 
   // apply prepared menu template to tray

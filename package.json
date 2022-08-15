@@ -12,15 +12,16 @@
   "author": "Kamil",
   "license": "ISC",
   "devDependencies": {
-    "@electron-forge/cli": "^6.0.0-beta.63",
-    "@electron-forge/maker-deb": "^6.0.0-beta.63",
-    "@electron-forge/maker-rpm": "^6.0.0-beta.63",
-    "@electron-forge/maker-squirrel": "^6.0.0-beta.63",
-    "@electron-forge/maker-zip": "^6.0.0-beta.63",
+    "@electron-forge/cli": "^6.0.0-beta.65",
+    "@electron-forge/maker-deb": "^6.0.0-beta.65",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.65",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.65",
+    "@electron-forge/maker-zip": "^6.0.0-beta.65",
     "electron": "^17.2.0",
     "electron-prebuilt-compile": "8.2.0"
   },
   "dependencies": {
+    "colors": "^1.4.0",
     "electron-squirrel-startup": "^1.0.0",
     "mdns-discovery": "^0.2.6",
     "multicast-dns": "^7.2.5"
