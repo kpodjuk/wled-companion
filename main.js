@@ -6,7 +6,7 @@
 // electron-forge make
 
 // constant parameters
-const refreshContextMenuMs = 30000; // time between context menu refreshes
+const refreshContextMenuMs = 60000; // time between context menu refreshes
 const irBulbsInContextMenu = false; // should additional menu section for sending bulb commands be added?
 const motionSensingContextMenu = false;
 const DEBUGENABLED = true; // is application debug enabled?
@@ -15,18 +15,18 @@ const brightnessStepSize = 70; // step size when using "brightness up" and "brig
 const nodes = [
   "http://192.168.1.33/", // biurko
   // "http://192.168.1.41/", // master
-  "http://192.168.1.59/", // nad tv
-  // "http://192.168.1.42/", // pod tv
+  // "http://192.168.1.59/", // nad tv
+  "http://192.168.1.42/", // pod tv
 ];
 
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, Tray, Menu } = require("electron");
-const path = require("path");
 const request = require("request");
-const { markAsUntransferable } = require("worker_threads");
 const shell = require("electron").shell;
 var colors = require("colors");
 var mdns = require("multicast-dns")();
+
+require("electron").Menu.setApplicationMenu(null); // disable menu at the top of the window
 
 // MDNS handling
 mdns.on("response", function (response) {
@@ -56,12 +56,9 @@ function refreshContextMenu(tray) {
   askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
 }
 
-// function sleep(ms) {
-//   return new Promise((resolve) => {
-//     setTimeout(resolve, ms);
-//     console.log('hello');
-//   });
-// }
+function searchForNodes() {
+  console.log("Trying to discover nodes...".blue);
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -73,23 +70,19 @@ app.whenReady().then(() => {
   }
   // discover nodes in network
   // nodes = searchForNodes();
-  console.log("Trying to discover nodes...".blue);
   mdns.query([{ name: "_http._tcp", type: "A" }]);
 
   // create tray icon
   tray = new Tray(trayIconPath);
 
   // create interval for context menu refresh
-  // setInterval(() => {
-  //   refreshContextMenu(tray);
-  //   console.log("Refreshing context menu...");
-  // }, refreshContextMenuMs);
+  setInterval(() => {
+    refreshContextMenu(tray);
+    console.log("Refreshing context menu...".blue);
+  }, refreshContextMenuMs);
 
   // ask discovered nodes about required info and populate interface once all responses are received
   askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
-
-  // tray.setToolTip('WLED companion')
-  // tray.setContextMenu(contextMenu)
 });
 
 function askAllNodesForInfoAndUpdateContextMenu(adressList = [], tray) {
@@ -111,13 +104,13 @@ function askAllNodesForInfoAndUpdateContextMenu(adressList = [], tray) {
           name: jsonObject["info"]["name"],
           address: response.request.uri.protocol + "//" + response.request.host,
           synchState: jsonObject["state"]["udpn"],
-          brightness: jsonObject["state"]["bri"],
           avaliablePresets: [],
         });
 
         // check if got response from everyone
         if (nodesInfoArray.length == nodeCount) {
           // ask each node for avaliable presets
+          let nodesFilledWithPresetsCounter = 0; // to count how many nodes have filled presets array
           for (let z = 0; z < nodeCount; z++) {
             (currentAddress = nodesInfoArray[z].address + "/presets.json"),
               request.get(currentAddress, function (error, response, body) {
@@ -144,29 +137,30 @@ function askAllNodesForInfoAndUpdateContextMenu(adressList = [], tray) {
                     }
                   }
 
-                  nodeAdress =
+                  nodeAddress =
                     response.request.uri.protocol +
                     "//" +
                     response.request.host;
 
                   // complete node record  with created array, identify node by address
                   nodesInfoArray.forEach((element) => {
-                    if (element.address == nodeAdress) {
+                    if (element.address == nodeAddress) {
                       element.avaliablePresets = presetArray;
+                      // console.log(
+                      //   "Got presets for " +
+                      //     nodeAddress +
+                      //     " counter=" +
+                      //     nodesFilledWithPresetsCounter +
+                      //     " presetArray= "
+                      // );
+                      // console.log(presetArray);
                     }
                   });
 
-                  let stillNotComplete = false;
-                  // check if all nodes have populated presets
-                  nodesInfoArray.forEach((element) => {
-                    if (element.avaliablePresets.length == 0) {
-                      // if any element has empty array, set flag to true
-                      stillNotComplete = true;
-                      // probably should be handled differently, via promise->then or something
-                    }
-                  });
-                  if (stillNotComplete == false) {
-                    // got all required data for each node, time to populate interface
+                  // checking if all nodes have populated presets here...
+                  nodesFilledWithPresetsCounter++;
+                  if (nodesFilledWithPresetsCounter == nodeCount) {
+                    // all done, all nodes have presets now, we can now create context menu
                     populateContextMenu(nodesInfoArray, tray);
                   }
                 }
@@ -179,7 +173,7 @@ function askAllNodesForInfoAndUpdateContextMenu(adressList = [], tray) {
 }
 
 function populateContextMenu(allNodes, tray) {
-  console.log("Got all node info, populating interface with: ".green);
+  console.log("Got info about all nodes, populating interface with: ".green);
   console.log(JSON.stringify(allNodes, null, 2));
   let menuTemplate = [];
 
@@ -194,10 +188,18 @@ function populateContextMenu(allNodes, tray) {
 
     // add inactive label with information that those are presets
     menuTemplate[i].submenu.push({
-      label: "Avaliable presets",
+      label: "Available presets",
       type: "normal",
       enabled: false,
     });
+
+    // it's possible for node to have no presets! check for that and add information about it the interface
+    if (allNodes[i].avaliablePresets.length == 0) {
+      menuTemplate[i].submenu.push({
+        label: "No presets avaliable",
+        type: "normal",
+      });
+    }
 
     // construct menu template, second level: presets and specific node settings
     for (let j = 0; j < allNodes[i].avaliablePresets.length; j++) {
@@ -205,11 +207,6 @@ function populateContextMenu(allNodes, tray) {
         label: "📜 " + allNodes[i].avaliablePresets[j].name, // here you populate preset name
         type: "normal",
         click() {
-          console.log(
-            "preset choosen: " + allNodes[i].avaliablePresets[j].name
-          );
-          console.log("for node:" + allNodes[i].name);
-
           // send request to switch preset to node
           request.get(
             allNodes[i].address +
@@ -219,7 +216,7 @@ function populateContextMenu(allNodes, tray) {
               if (error) throw error;
               if (!error && response.statusCode == 200) {
                 console.log(
-                  "200 Successfully switched preset:" +
+                  "200 Successfully switched preset: ".green +
                     allNodes[i].address +
                     "/win&PL=" +
                     allNodes[i].avaliablePresets[j].id
@@ -230,10 +227,6 @@ function populateContextMenu(allNodes, tray) {
         },
       });
     }
-
-    // assign current state to vars
-    let currentSynchState = allNodes[i].synchState.send;
-    // let currentBrightness = allNodes[i].brightness;
 
     // add additional section with settings that are the same for every module
     menuTemplate[i].submenu.push(
@@ -248,7 +241,7 @@ function populateContextMenu(allNodes, tray) {
       {
         label: "♻ Sync others",
         type: "checkbox",
-        checked: currentSynchState, // current status has to be requested from node
+        checked: allNodes[i].synchState.send, // current status has to be requested from node
         click() {
           // send request populate status of synchronization option
           request.post(
@@ -256,16 +249,15 @@ function populateContextMenu(allNodes, tray) {
             {
               json: {
                 udpn: {
-                  send: (currentSynchState = !currentSynchState),
+                  send: (allNodes[i].synchState.send =
+                    !allNodes[i].synchState.send),
                 },
               },
             },
             function (error, response, body) {
               if (error) throw error;
               if (!error && response.statusCode == 200) {
-                console.log(
-                  "200 Successfully changed synchronization option".green
-                );
+                console.log("200 Changed synchronization option".green);
               }
             }
           );
@@ -281,14 +273,14 @@ function populateContextMenu(allNodes, tray) {
             if (error) throw error;
             if (!error && response.statusCode == 200) {
               console.log(
-                "200 Toggled power, request address: " + requestAddress
+                "200 Toggled power, request address: ".green + requestAddress
               );
             }
           });
         },
       },
       {
-        label: "⚙️ Web service",
+        label: "⚙️ Settings",
         type: "normal",
         click() {
           // open web service in browser
@@ -296,25 +288,48 @@ function populateContextMenu(allNodes, tray) {
         },
       },
       {
-        label: "🌕 Brightness up",
+        label: "Brightness",
+        type: "normal",
+        enabled: false,
+      },
+      {
+        label: "🌕 Brighter",
         type: "normal",
         click() {
-          allNodes[i].brightness += brightnessStepSize; // increase brightness by step size
-          // check if brightness is within limits
-          if (allNodes[i].brightness > 255) {
-            allNodes[i].brightness = 255;
-          }
-          // send request to change brightness
+          // ask what is the current brightness, it could have changed in the meantime
           request.get(
-            allNodes[i].address + "/win&A=" + allNodes[i].brightness,
+            allNodes[i].address + "/json/si",
             (error, response, body) => {
               if (error) throw error;
               if (!error && response.statusCode == 200) {
+                const jsonObject = JSON.parse(body);
+                desiredBrightness = jsonObject["state"]["bri"];
+
                 console.log(
-                  "200 Successfully sent brightness up request, request address: " +
-                    allNodes[i].address +
-                    "/win&A=" +
-                    allNodes[i].brightness
+                  "200 Got brightness before incrementing: ".green +
+                    desiredBrightness
+                );
+                // increment
+                desiredBrightness += brightnessStepSize;
+                // check if it's still within bounds
+                if (desiredBrightness > 255) {
+                  desiredBrightness = 255;
+                }
+                // send request to change brightness
+                request.get(
+                  allNodes[i].address + "/win&A=" + desiredBrightness,
+                  (error, response, body) => {
+                    if (error) throw error;
+                    if (!error && response.statusCode == 200) {
+                      console.log(
+                        "200 Successfully sent brightness UP request, request address: "
+                          .green +
+                          allNodes[i].address +
+                          "/win&A=" +
+                          desiredBrightness
+                      );
+                    }
+                  }
                 );
               }
             }
@@ -322,25 +337,47 @@ function populateContextMenu(allNodes, tray) {
         },
       },
       {
-        label: "🌒 Brightness down",
+        label: "🌒 Dimmer",
         type: "normal",
+        // sublabel: "test",
+        // role: "paste",
+        // really need to find a way to stop it from closing automatically after click()...
+        // https://stackoverflow.com/questions/61538230/how-to-make-a-menu-not-close-when-a-menuitems-click-event-is-invoked-electron
         click() {
-          allNodes[i].brightness -= brightnessStepSize; // increase brightness by step size
-          // check if brightness is within limits
-          if (allNodes[i].brightness < 0) {
-            allNodes[i].brightness = 0;
-          }
-          // send request to change brightness
+          // ask what is the current brightness, it could have changed in the meantime
           request.get(
-            allNodes[i].address + "/win&A=" + allNodes[i].brightness,
+            allNodes[i].address + "/json/si",
             (error, response, body) => {
               if (error) throw error;
               if (!error && response.statusCode == 200) {
+                const jsonObject = JSON.parse(body);
+                desiredBrightness = jsonObject["state"]["bri"];
+
                 console.log(
-                  "200 Successfully sent brightness up request, request address: " +
-                    allNodes[i].address +
-                    "/win&A=" +
-                    allNodes[i].brightness
+                  "200 Got brightness before decrementing: ".green +
+                    desiredBrightness
+                );
+                // increment
+                desiredBrightness -= brightnessStepSize;
+                // check if it's still within bounds
+                if (desiredBrightness < 1) {
+                  desiredBrightness = 1;
+                }
+                // send request to change brightness
+                request.get(
+                  allNodes[i].address + "/win&A=" + desiredBrightness,
+                  (error, response, body) => {
+                    if (error) throw error;
+                    if (!error && response.statusCode == 200) {
+                      console.log(
+                        "200 Successfully sent brightness DOWN request, request address: "
+                          .green +
+                          allNodes[i].address +
+                          "/win&A=" +
+                          desiredBrightness
+                      );
+                    }
+                  }
                 );
               }
             }
@@ -363,7 +400,7 @@ function populateContextMenu(allNodes, tray) {
 
   // Very first element, inactive label with description that those are nodes, added to top of menu
   menuTemplate.unshift({
-    label: "Detected nodes: ",
+    label: "Available nodes: ",
     type: "normal",
     enabled: false,
   });
@@ -413,10 +450,10 @@ function populateContextMenu(allNodes, tray) {
     // code for motion sensing checkbox here...
   }
 
-  // apply prepared menu template to tray
+  // all done, apply prepared menu template to tray
   const contextMenu = Menu.buildFromTemplate(menuTemplate);
-  tray.setToolTip("WLED companion");
   tray.setContextMenu(contextMenu);
+  tray.setToolTip("WLED companion");
 }
 
 function printjson(json) {
@@ -443,8 +480,12 @@ const createWindow = () => {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      // preload: path.join(__dirname, "preload.js"),
     },
+    resizable: false,
+    fullscreenable: false,
+    maximizable: false,
+    // minimizable: false
   });
 
   // and load the index.html of the app.
@@ -453,10 +494,3 @@ const createWindow = () => {
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
 };
-
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});

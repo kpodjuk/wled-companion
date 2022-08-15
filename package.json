@@ -21,10 +21,13 @@
     "electron-prebuilt-compile": "8.2.0"
   },
   "dependencies": {
+    "bootstrap": "^5.2.0",
     "colors": "^1.4.0",
     "electron-squirrel-startup": "^1.0.0",
+    "jquery": "^3.6.0",
     "mdns-discovery": "^0.2.6",
-    "multicast-dns": "^7.2.5"
+    "multicast-dns": "^7.2.5",
+    "popper.js": "^1.16.1"
   },
   "config": {
     "forge": {
