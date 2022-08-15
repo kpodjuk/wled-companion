@@ -1,17 +1,8 @@
-// to run:
-// nodemon --exec npm run start
-// to build:
-// npm install --save-dev @electron-forge/cli
-// npx electron-forge import
-// electron-forge make
-
-// constant parameters
 const refreshContextMenuMs = 60000; // time between context menu refreshes
-const irBulbsInContextMenu = false; // should additional menu section for sending bulb commands be added?
-const motionSensingContextMenu = false;
-const DEBUGENABLED = true; // is application debug enabled?
-const trayIconPath = "images/bulb-icon.png";
 const brightnessStepSize = 70; // step size when using "brightness up" and "brightness down" buttons
+const motionSensingContextMenu = false;
+const irBulbsInContextMenu = false; // should additional menu section for sending bulb commands be added?
+const trayIconPath = "images/bulb-icon.png";
 const nodes = [
   "http://192.168.1.33/", // biurko
   // "http://192.168.1.41/", // master
@@ -19,160 +10,14 @@ const nodes = [
   "http://192.168.1.42/", // pod tv
 ];
 
-// Modules to control application life and create native browser window
-const { app, BrowserWindow, Tray, Menu } = require("electron");
+// required modules
+const { Tray, Menu } = require("electron");
 const request = require("request");
 const shell = require("electron").shell;
-var colors = require("colors");
-var mdns = require("multicast-dns")();
 
-require("electron").Menu.setApplicationMenu(null); // disable menu at the top of the window
-
-// MDNS handling
-mdns.on("response", function (response) {
-  // console.log('got a response packet:', response)
-});
-
-mdns.on("query", function (query) {
-  // console.log('got a query packet:', query)
-});
-
-// questions:[{
-//   name: '_http._tcp',
-//   type: 'A'
-
-app.setUserTasks([
-  {
-    program: process.execPath,
-    arguments: "",
-    iconPath: process.execPath,
-    iconIndex: 0,
-    title: "WLED companion",
-    description: "",
-  },
-]);
-
-function refreshContextMenu(tray) {
-  askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
-}
-
-function searchForNodes() {
-  console.log("Trying to discover nodes...".blue);
-}
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
-  if (DEBUGENABLED) {
-    console.log("!!! Debug mode enabled !!!".blue);
-    createWindow(); // window is created only in debug mode, for easier debugging
-  }
-  // discover nodes in network
-  // nodes = searchForNodes();
-  mdns.query([{ name: "_http._tcp", type: "A" }]);
-
-  // create tray icon
-  tray = new Tray(trayIconPath);
-
-  // create interval for context menu refresh
-  setInterval(() => {
-    refreshContextMenu(tray);
-    console.log("Refreshing context menu...".blue);
-  }, refreshContextMenuMs);
-
-  // ask discovered nodes about required info and populate interface once all responses are received
-  askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
-});
-
-function askAllNodesForInfoAndUpdateContextMenu(adressList = [], tray) {
-  var nodesInfoArray = []; // array of objects with info about nodes
-  nodeCount = adressList.length;
-
-  // sent requests to all nodes on address list
-  for (let i = 0; i < nodeCount; i++) {
-    currentAddress = adressList[i];
-
-    // ask for name and synch button status
-    request.get(currentAddress + "json", function (error, response, body) {
-      if (error) throw error;
-      if (!error && response.statusCode == 200) {
-        // printjson(body);
-        const jsonObject = JSON.parse(body);
-        nodesInfoArray.push({
-          // id: nodesInfoArray.length, // not sure if needed
-          name: jsonObject["info"]["name"],
-          address: response.request.uri.protocol + "//" + response.request.host,
-          synchState: jsonObject["state"]["udpn"],
-          avaliablePresets: [],
-        });
-
-        // check if got response from everyone
-        if (nodesInfoArray.length == nodeCount) {
-          // ask each node for avaliable presets
-          let nodesFilledWithPresetsCounter = 0; // to count how many nodes have filled presets array
-          for (let z = 0; z < nodeCount; z++) {
-            (currentAddress = nodesInfoArray[z].address + "/presets.json"),
-              request.get(currentAddress, function (error, response, body) {
-                if (!error && response.statusCode == 200) {
-                  const bodyObject = JSON.parse(body);
-                  let presetIds = Object.keys(bodyObject);
-                  let presetArray = [];
-
-                  // iterate through every preset and add it to array
-                  for (
-                    let presetCounter = 0;
-                    presetCounter < presetIds.length;
-                    presetCounter++
-                  ) {
-                    if (
-                      typeof bodyObject[presetIds[presetCounter]]["n"] !==
-                      "undefined"
-                    ) {
-                      // only push presets that don't have undefined name
-                      presetArray.push({
-                        id: presetIds[presetCounter],
-                        name: bodyObject[presetIds[presetCounter]]["n"],
-                      });
-                    }
-                  }
-
-                  nodeAddress =
-                    response.request.uri.protocol +
-                    "//" +
-                    response.request.host;
-
-                  // complete node record  with created array, identify node by address
-                  nodesInfoArray.forEach((element) => {
-                    if (element.address == nodeAddress) {
-                      element.avaliablePresets = presetArray;
-                      // console.log(
-                      //   "Got presets for " +
-                      //     nodeAddress +
-                      //     " counter=" +
-                      //     nodesFilledWithPresetsCounter +
-                      //     " presetArray= "
-                      // );
-                      // console.log(presetArray);
-                    }
-                  });
-
-                  // checking if all nodes have populated presets here...
-                  nodesFilledWithPresetsCounter++;
-                  if (nodesFilledWithPresetsCounter == nodeCount) {
-                    // all done, all nodes have presets now, we can now create context menu
-                    populateContextMenu(nodesInfoArray, tray);
-                  }
-                }
-              });
-          }
-        }
-      }
-    });
-  }
-}
-
-function populateContextMenu(allNodes, tray) {
+// ##### those are like private methods, can't use them anywhere else, only here #####
+// populate context menu with info that was gathered from nodes in askAllNodesForInfoAndUpdateContextMenu()
+var populateContextMenu = function (allNodes, tray) {
   console.log("Got info about all nodes, populating interface with: ".green);
   console.log(JSON.stringify(allNodes, null, 2));
   let menuTemplate = [];
@@ -454,13 +299,96 @@ function populateContextMenu(allNodes, tray) {
   const contextMenu = Menu.buildFromTemplate(menuTemplate);
   tray.setContextMenu(contextMenu);
   tray.setToolTip("WLED companion");
-}
+};
 
-function printjson(json) {
-  console.log(JSON.stringify(json, null, 2));
-}
+var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
+  var nodesInfoArray = []; // array of objects with info about nodes
+  nodeCount = adressList.length;
 
-function sendIrCommand(command) {
+  // sent requests to all nodes on address list
+  for (let i = 0; i < nodeCount; i++) {
+    currentAddress = adressList[i];
+
+    // ask for name and synch button status
+    request.get(currentAddress + "json", function (error, response, body) {
+      if (error) throw error;
+      if (!error && response.statusCode == 200) {
+        // printjson(body);
+        const jsonObject = JSON.parse(body);
+        nodesInfoArray.push({
+          // id: nodesInfoArray.length, // not sure if needed
+          name: jsonObject["info"]["name"],
+          address: response.request.uri.protocol + "//" + response.request.host,
+          synchState: jsonObject["state"]["udpn"],
+          avaliablePresets: [],
+        });
+
+        // check if got response from everyone
+        if (nodesInfoArray.length == nodeCount) {
+          // ask each node for avaliable presets
+          let nodesFilledWithPresetsCounter = 0; // to count how many nodes have filled presets array
+          for (let z = 0; z < nodeCount; z++) {
+            (currentAddress = nodesInfoArray[z].address + "/presets.json"),
+              request.get(currentAddress, function (error, response, body) {
+                if (!error && response.statusCode == 200) {
+                  const bodyObject = JSON.parse(body);
+                  let presetIds = Object.keys(bodyObject);
+                  let presetArray = [];
+
+                  // iterate through every preset and add it to array
+                  for (
+                    let presetCounter = 0;
+                    presetCounter < presetIds.length;
+                    presetCounter++
+                  ) {
+                    if (
+                      typeof bodyObject[presetIds[presetCounter]]["n"] !==
+                      "undefined"
+                    ) {
+                      // only push presets that don't have undefined name
+                      presetArray.push({
+                        id: presetIds[presetCounter],
+                        name: bodyObject[presetIds[presetCounter]]["n"],
+                      });
+                    }
+                  }
+
+                  nodeAddress =
+                    response.request.uri.protocol +
+                    "//" +
+                    response.request.host;
+
+                  // complete node record  with created array, identify node by address
+                  nodesInfoArray.forEach((element) => {
+                    if (element.address == nodeAddress) {
+                      element.avaliablePresets = presetArray;
+                      // console.log(
+                      //   "Got presets for " +
+                      //     nodeAddress +
+                      //     " counter=" +
+                      //     nodesFilledWithPresetsCounter +
+                      //     " presetArray= "
+                      // );
+                      // console.log(presetArray);
+                    }
+                  });
+
+                  // checking if all nodes have populated presets here...
+                  nodesFilledWithPresetsCounter++;
+                  if (nodesFilledWithPresetsCounter == nodeCount) {
+                    // all done, all nodes have presets now, we can now create context menu
+                    populateContextMenu(nodesInfoArray, tray);
+                  }
+                }
+              });
+          }
+        }
+      }
+    });
+  }
+};
+
+var sendIrCommand = function (command) {
   // POST  http://192.168.1.41/json/si -d '{"bulbCommand": "04", "v":true}' -H "Content-Type: application/json"
 
   request.post(
@@ -472,25 +400,20 @@ function sendIrCommand(command) {
       }
     }
   );
-}
+};
 
-const createWindow = () => {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      // preload: path.join(__dirname, "preload.js"),
-    },
-    resizable: false,
-    fullscreenable: false,
-    maximizable: false,
-    // minimizable: false
-  });
+module.exports = {
+  init: function () {
+    // create tray icon
+    tray = new Tray(trayIconPath);
 
-  // and load the index.html of the app.
-  mainWindow.loadFile("index.html");
+    // ask discovered nodes about required info and populate interface once all responses are received
+    askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+    // create interval for context menu refresh
+    setInterval(() => {
+      askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
+      console.log("Refreshing context menu...".blue);
+    }, refreshContextMenuMs);
+  },
 };
