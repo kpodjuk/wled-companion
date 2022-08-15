@@ -34,12 +34,10 @@ app.setUserTasks([
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   if (DEBUGENABLED) {
-    createWindow(); // window is created only in debug mode, for easier debugging
+    createWindow();
   }
-  // initialize mdns for discovery of nodes without having to type in their ip
+  // initialize mdns for discovery of nodes
   mdnsHandler.init();
-  // Initialize tray icon, set interval for refresh and start sending first requests
-  // trayIconHandler.init();
 });
 
 const createWindow = () => {
@@ -51,7 +49,7 @@ const createWindow = () => {
       preload: path.join(__dirname, "preload.js"),
     },
     resizable: true,
-    fullscreenable: true,
+    fullscreenable: false,
     maximizable: false,
     // minimizable: false
   });
@@ -64,6 +62,16 @@ const createWindow = () => {
   ipcMain.handle("startSearching", () => mdnsHandler.startSearching());
 
   ipcMain.handle("proceedWithFoundModules", () => {
+    // console.log(
+    //   "Got the module list! mDNS handler passes this to tray icon handler: "
+    //     .green
+    // );
+    // console.log(mdnsHandler.returnDetectedDevices());
+
+    // turn off mdns answers listening
+    mdnsHandler.stopAwaitingResponses();
+
+    // build tray context menu
     trayIconHandler.passNodeList(mdnsHandler.returnDetectedDevices());
     trayIconHandler.init();
   });

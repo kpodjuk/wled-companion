@@ -1,4 +1,4 @@
-const refreshContextMenuMs = 60000; // 60000 // time between context menu refreshes, 0 means no refresh
+const refreshContextMenuMs = 60000; // time between context menu refreshes, 0 means no refresh
 const brightnessStepSize = 70; // step size when using "brightness up" and "brightness down" buttons
 const motionSensingContextMenu = false;
 const irBulbsInContextMenu = false; // should additional menu section for sending bulb commands be added?
@@ -15,16 +15,14 @@ const { Tray, Menu } = require("electron");
 const request = require("request");
 const shell = require("electron").shell;
 
-var nodes = [];
+var nodesToAsk = []; // array holiding list of adresses of nodes to ask for info
 
-// ##### those are like private methods, can't use them anywhere else, only here #####
 // populate context menu with info that was gathered from nodes in askAllNodesForInfoAndUpdateContextMenu()
 var populateContextMenu = function (allNodes, tray) {
   console.log(
-    "populateContextMenu(): Got info about all nodes, populating interface"
+    "populateContextMenu(): 200 Got data from all nodes, populating context menu "
       .green
   );
-  // console.log(JSON.stringify(allNodes, null, 2).green);
   let menuTemplate = [];
 
   // construct menu template, first level: module names, loop iterates through each node
@@ -307,8 +305,22 @@ var populateContextMenu = function (allNodes, tray) {
 };
 
 var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
-  var nodesInfoArray = []; // array of objects with info about nodes
+  adressList.forEach((element, index) => {
+    // address should look like this: http://192.168.1.41/
+    adressList[index] = "http://" + adressList[index] + "/";
+  });
+
+  console.log(
+    "askAllNodesForInfoAndUpdateContextMenu(): will now sent requests here: "
+      .brightCyan
+  );
+  console.log(adressList);
+
+  var nodesInfoArray = []; // array of objects to fill with info about nodes
   nodeCount = adressList.length;
+
+  // temporary array replacement
+  // adressList = ["http://192.168.1.41/", "http://192.168.1.59/"];
 
   // sent requests to all nodes on address list
   for (let i = 0; i < nodeCount; i++) {
@@ -411,21 +423,21 @@ module.exports = {
     // create tray icon
     tray = new Tray(trayIconPath);
 
-    console.log("proceedWithFoundModules()".green);
+    // console.log("trayIconHandler(): started init()".brightCyan);
 
-    // ask discovered nodes about required info and populate interface once all responses are received
-    askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
+    // ask discovered nodes about required info and populate context menu, once all responsess are received
+    askAllNodesForInfoAndUpdateContextMenu(nodesToAsk, tray);
 
     // create interval for context menu refresh
     if (refreshContextMenuMs > 0) {
       setInterval(() => {
-        askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
+        askAllNodesForInfoAndUpdateContextMenu(nodesToAsk, tray);
         console.log("Refreshing context menu...".blue);
       }, refreshContextMenuMs);
     }
   },
 
   passNodeList: function (nodeList) {
-    nodes = nodeList;
+    nodesToAsk = nodeList;
   },
 };

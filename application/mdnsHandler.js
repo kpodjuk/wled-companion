@@ -19,10 +19,6 @@ var questions = [
   },
 ];
 
-var saveNewWLEDDevice = function (deviceAddress) {
-  // now we know for sure it's WLED, save it to the database
-};
-
 var jsonPrint = function (json) {
   return JSON.stringify(json, null, 2).brightMagenta;
 };
@@ -31,7 +27,9 @@ var sendQuery = function () {
   // you don't even have to send queries? Or what?
   // doesn't seem to make a difference on answers I receive
 
-  console.log("sendQuery(): Sending mdns query, with questions: ");
+  console.log(
+    "sendQuery(): Sending mdns query, with questions: ".brightMagenta
+  );
   console.log(jsonPrint(questions));
   mdns.query(questions);
 };
@@ -46,7 +44,6 @@ var isItWLED = function (deviceAddress) {
       " - possible WLED module"
     ).yellow
   );
-  // send api call to check if it's actually a wled device, only WLED will repond on this URL
   request.get(apiCallUrl, (error, response, body) => {
     if (!error && response.statusCode == 200) {
       console.log("isItWLED(): 200, Found new WLED device!".green);
@@ -58,6 +55,13 @@ var isItWLED = function (deviceAddress) {
 };
 
 module.exports = {
+  stopAwaitingResponses: () => {
+    // found what was needed, no need to analyze responses anymore
+
+    console.log("mdnsHandler(): Stopped awaiting responses".yellow);
+    mdns.on("response", (response) => {});
+  },
+
   init: function () {
     // handle responses
     mdns.on("response", function (response) {
@@ -101,14 +105,13 @@ module.exports = {
   },
 
   startSearching: () => {
-    console.log("Frontend asked for startSearching()".yellow);
+    // console.log("Frontend asked for startSearching()".yellow);
     sendQuery();
   },
 
   returnDetectedDevices: function () {
     // return array with detected WLED nodes
-    let arrayAsString = "[" + foundWLEDDevices.join(", ") + "]";
-    return arrayAsString;
+    return foundWLEDDevices;
   },
 };
 
