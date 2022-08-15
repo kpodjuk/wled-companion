@@ -1,19 +1,21 @@
-const refreshContextMenuMs = 0; // 60000 // time between context menu refreshes, 0 means no refresh
+const refreshContextMenuMs = 60000; // 60000 // time between context menu refreshes, 0 means no refresh
 const brightnessStepSize = 70; // step size when using "brightness up" and "brightness down" buttons
 const motionSensingContextMenu = false;
 const irBulbsInContextMenu = false; // should additional menu section for sending bulb commands be added?
 const trayIconPath = "images/bulb-icon.png";
-const nodes = [
-  // "http://192.168.1.33/", // biurko
-  // "http://192.168.1.41/", // master
-  // "http://192.168.1.59/", // nad tv
-  "http://192.168.1.42/", // pod tv
-];
+// const nodes = [
+//   "http://192.168.1.33/", // biurko
+//   "http://192.168.1.41/", // master
+//   "http://192.168.1.59/", // nad tv
+//   // "http://192.168.1.42/", // pod tv
+// ];
 
 // required modules
 const { Tray, Menu } = require("electron");
 const request = require("request");
 const shell = require("electron").shell;
+
+var nodes = [];
 
 // ##### those are like private methods, can't use them anywhere else, only here #####
 // populate context menu with info that was gathered from nodes in askAllNodesForInfoAndUpdateContextMenu()
@@ -409,6 +411,8 @@ module.exports = {
     // create tray icon
     tray = new Tray(trayIconPath);
 
+    console.log("proceedWithFoundModules()".green);
+
     // ask discovered nodes about required info and populate interface once all responses are received
     askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
 
@@ -419,5 +423,9 @@ module.exports = {
         console.log("Refreshing context menu...".blue);
       }, refreshContextMenuMs);
     }
+  },
+
+  passNodeList: function (nodeList) {
+    nodes = nodeList;
   },
 };

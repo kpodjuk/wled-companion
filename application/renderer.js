@@ -1,25 +1,33 @@
-// const mdnsHandler = require("./mdnsHandler.js");
+const getDetectedDevicesIntervalMs = 5000;
+
 // even listeners for buttons
 document.addEventListener("click", (e) => {
-  // console.log("Clicked: " + e.target.id);
-
-  if (e.target.id === "startSearching") {
-    // mdnsHandler.sendQuery();
-  } else if (e.target.id === "getFoundDevices") {
-    getDetectedDevices();
+  switch (e.target.id) {
+    case "startSearching": {
+      startSearching();
+      break;
+    }
+    case "continue": {
+      proceedWithFoundModules();
+      break;
+    }
   }
 });
 
-// Ping backend example:
-// const func = async () => {
-//   const response = await window.versions.ping();
-//   console.log(response); // prints out 'pong'
-// };
+var getDetectedDevicesInterval = window.setInterval(() => {
+  getDetectedDevices();
+}, getDetectedDevicesIntervalMs);
 
 const getDetectedDevices = async () => {
-  // in here we will get array with found devices, hopefully
+  // in here we will get array with found devices from backend, hopefully
   const response = await window.versions.getDetectedDevices();
   document.getElementById("foundWLEDDevices").innerText = response;
 };
 
-// func();
+const startSearching = async () => {
+  const reponse = await window.versions.startSearching();
+};
+
+const proceedWithFoundModules = async () => {
+  const response = await window.versions.proceedWithFoundModules();
+};

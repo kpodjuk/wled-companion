@@ -6,8 +6,9 @@ contextBridge.exposeInMainWorld("versions", {
   chrome: () => process.versions.chrome,
   electron: () => process.versions.electron,
 
-  ping: () => ipcRenderer.invoke("ping"),
   getDetectedDevices: () => ipcRenderer.invoke("getDetectedDevices"),
+  startSearching: () => ipcRenderer.invoke("startSearching"),
+  proceedWithFoundModules: () => ipcRenderer.invoke("proceedWithFoundModules"),
   // we can also expose variables, not just functions
 });
 

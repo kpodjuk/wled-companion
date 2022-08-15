@@ -27,22 +27,32 @@ var jsonPrint = function (json) {
   return JSON.stringify(json, null, 2).brightMagenta;
 };
 
+var sendQuery = function () {
+  // you don't even have to send queries? Or what?
+  // doesn't seem to make a difference on answers I receive
+
+  console.log("sendQuery(): Sending mdns query, with questions: ");
+  console.log(jsonPrint(questions));
+  mdns.query(questions);
+};
+
+// at this point - strong suspicion that it's WLED, send get request
 var isItWLED = function (deviceAddress) {
   apiCallUrl = "http://" + deviceAddress + "/win";
-  console.log(("isItWLED(): " + deviceAddress + " ?").brightMagenta);
+  console.log(
+    (
+      "isItWLED(): Sending request to " +
+      deviceAddress +
+      " - possible WLED module"
+    ).yellow
+  );
   // send api call to check if it's actually a wled device, only WLED will repond on this URL
   request.get(apiCallUrl, (error, response, body) => {
     if (!error && response.statusCode == 200) {
-      console.log("isItWLED(): 200, it's a wled device!".brightMagenta);
-
+      console.log("isItWLED(): 200, Found new WLED device!".green);
       foundWLEDDevices.push(deviceAddress);
-
-      console.log("WLED devices found so far: ".brightMagenta);
-      console.log(foundWLEDDevices);
     } else {
-      console.log(
-        "isItWLED(): " + error + " it's probalby not a WLED device".red
-      );
+      console.log("isItWLED(): ".red + error + " It's not a WLED device".red);
     }
   });
 };
@@ -52,36 +62,53 @@ module.exports = {
     // handle responses
     mdns.on("response", function (response) {
       console.log("-------------------------------------------------------");
-      console.log("Got MDNS response!");
-      console.log("It's IP is: " + jsonPrint(response.answers[0].data));
-      // we have something, is it really wled?
-      // before checking, make sure it's not already on the list, doesn't make sense to bother it again
-      if (!foundWLEDDevices.includes(response.answers[0].data)) {
-        isItWLED(response.answers[0].data);
+      // console.log("Got MDNS response!"); // log answers here
+      console.log("Got MDNS response!, answers: ");
+      console.log(response.answers);
+
+      // first, check if there's at least field with ip address
+      // doesn't make sense to try to send request if data field doesn't contain ip address
+      // it should be a string if it's WLED answering
+      if (typeof response.answers[0].data == "string") {
+        console.log(
+          "mdnsResponseHandler(): Got answer with string in data field, promising!"
+            .green
+        );
+        console.log(
+          "mdnsResponseHandler(): Detected IP: ".green +
+            jsonPrint(response.answers[0].data)
+        );
+        // before sending request, make sure it's not already on the list, doesn't make sense to bother it again
+        if (!foundWLEDDevices.includes(response.answers[0].data)) {
+          console.log(
+            "mdnsResponseHandler() Not on the list! Have to send request".green
+          );
+          isItWLED(response.answers[0].data);
+        } else {
+          console.log(
+            "mdnsResponseHandler(): already was on the list, no sense bothering it again"
+              .brightMagenta
+          );
+        }
       } else {
         console.log(
-          "mdnsResponseHandler(): already was on the list, didn't even send request"
-            .brightMagenta
+          "mdnsResponseHandler(): No string in data field, don't care".red
         );
       }
+
       console.log("-------------------------------------------------------");
     });
+  },
+
+  startSearching: () => {
+    console.log("Frontend asked for startSearching()".yellow);
+    sendQuery();
   },
 
   returnDetectedDevices: function () {
     // return array with detected WLED nodes
     let arrayAsString = "[" + foundWLEDDevices.join(", ") + "]";
-    console.log("Providing foundWLEDDevices[] to frontend: " + arrayAsString);
     return arrayAsString;
-  },
-
-  sendQuery: function () {
-    // you don't even have to send queries? Or what?
-    //    serviceBrowser.StartBrowse("_http._tcp");
-
-    console.log("sendQuery(): Sending mdns query, with questions: ");
-    jsonPrint(questions);
-    mdns.query(questions);
   },
 };
 

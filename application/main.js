@@ -36,11 +36,10 @@ app.whenReady().then(() => {
   if (DEBUGENABLED) {
     createWindow(); // window is created only in debug mode, for easier debugging
   }
-
-  // Initialize tray icon, set interval for refresh and start sending first requests
-  trayIconHandler.init();
   // initialize mdns for discovery of nodes without having to type in their ip
   mdnsHandler.init();
+  // Initialize tray icon, set interval for refresh and start sending first requests
+  // trayIconHandler.init();
 });
 
 const createWindow = () => {
@@ -52,20 +51,28 @@ const createWindow = () => {
       preload: path.join(__dirname, "preload.js"),
     },
     resizable: true,
-    fullscreenable: false,
+    fullscreenable: true,
     maximizable: false,
     // minimizable: false
   });
 
-  // this is how you communicate with frontend, in this case it's frontend pinging backend:
-  // ipcMain.handle("ping", () => "pong");
+  // frontend requests handlers
   ipcMain.handle("getDetectedDevices", () =>
     mdnsHandler.returnDetectedDevices()
   );
+
+  ipcMain.handle("startSearching", () => mdnsHandler.startSearching());
+
+  ipcMain.handle("proceedWithFoundModules", () => {
+    trayIconHandler.passNodeList(mdnsHandler.returnDetectedDevices());
+    trayIconHandler.init();
+  });
 
   // and load the index.html of the app.
   mainWindow.loadFile("application/index.html");
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  if (DEBUGENABLED) {
+    mainWindow.webContents.openDevTools();
+  }
 };
