@@ -1,10 +1,10 @@
-const refreshContextMenuMs = 60000; // time between context menu refreshes
+const refreshContextMenuMs = 0; // 60000 // time between context menu refreshes, 0 means no refresh
 const brightnessStepSize = 70; // step size when using "brightness up" and "brightness down" buttons
 const motionSensingContextMenu = false;
 const irBulbsInContextMenu = false; // should additional menu section for sending bulb commands be added?
 const trayIconPath = "images/bulb-icon.png";
 const nodes = [
-  "http://192.168.1.33/", // biurko
+  // "http://192.168.1.33/", // biurko
   // "http://192.168.1.41/", // master
   // "http://192.168.1.59/", // nad tv
   "http://192.168.1.42/", // pod tv
@@ -18,8 +18,11 @@ const shell = require("electron").shell;
 // ##### those are like private methods, can't use them anywhere else, only here #####
 // populate context menu with info that was gathered from nodes in askAllNodesForInfoAndUpdateContextMenu()
 var populateContextMenu = function (allNodes, tray) {
-  console.log("Got info about all nodes, populating interface with: ".green);
-  console.log(JSON.stringify(allNodes, null, 2));
+  console.log(
+    "populateContextMenu(): Got info about all nodes, populating interface"
+      .green
+  );
+  // console.log(JSON.stringify(allNodes, null, 2).green);
   let menuTemplate = [];
 
   // construct menu template, first level: module names, loop iterates through each node
@@ -311,7 +314,6 @@ var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
 
     // ask for name and synch button status
     request.get(currentAddress + "json", function (error, response, body) {
-      if (error) throw error;
       if (!error && response.statusCode == 200) {
         // printjson(body);
         const jsonObject = JSON.parse(body);
@@ -411,9 +413,11 @@ module.exports = {
     askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
 
     // create interval for context menu refresh
-    setInterval(() => {
-      askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
-      console.log("Refreshing context menu...".blue);
-    }, refreshContextMenuMs);
+    if (refreshContextMenuMs > 0) {
+      setInterval(() => {
+        askAllNodesForInfoAndUpdateContextMenu(nodes, tray);
+        console.log("Refreshing context menu...".blue);
+      }, refreshContextMenuMs);
+    }
   },
 };
