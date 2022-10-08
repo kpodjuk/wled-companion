@@ -26,10 +26,7 @@ var jsonPrint = function (json) {
 var sendQuery = function () {
   // you don't even have to send queries? Or what?
   // doesn't seem to make a difference on answers I receive
-
-  console.log(
-    "sendQuery(): Sending mdns query, with questions: ".brightMagenta
-  );
+  console.log("sendQuery(): Sending mdns query, with questions: ".blue);
   console.log(jsonPrint(questions));
   mdns.query(questions);
 };
@@ -47,6 +44,7 @@ var isItWLED = function (deviceAddress) {
   request.get(apiCallUrl, (error, response, body) => {
     if (!error && response.statusCode == 200) {
       console.log("isItWLED(): 200, Found new WLED device!".green);
+
       foundWLEDDevices.push(deviceAddress);
     } else {
       console.log("isItWLED(): ".red + error + " It's not a WLED device".red);
@@ -59,7 +57,7 @@ module.exports = {
     // found what was needed, no need to analyze responses anymore
 
     console.log("mdnsHandler(): Stopped awaiting responses".yellow);
-    mdns.on("response", (response) => {});
+    mdns.destroy();
   },
 
   init: function () {
@@ -91,7 +89,7 @@ module.exports = {
         } else {
           console.log(
             "mdnsResponseHandler(): already was on the list, no sense bothering it again"
-              .brightMagenta
+              .yellow
           );
         }
       } else {

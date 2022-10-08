@@ -1,19 +1,14 @@
-const refreshContextMenuMs = 60000; // time between context menu refreshes, 0 means no refresh
+const refreshContextMenuMs = 120000; // time between context menu refreshes, 0 means no refresh
 const brightnessStepSize = 70; // step size when using "brightness up" and "brightness down" buttons
 const motionSensingContextMenu = false;
 const irBulbsInContextMenu = false; // should additional menu section for sending bulb commands be added?
 const trayIconPath = "images/bulb-icon.png";
-// const nodes = [
-//   "http://192.168.1.33/", // biurko
-//   "http://192.168.1.41/", // master
-//   "http://192.168.1.59/", // nad tv
-//   // "http://192.168.1.42/", // pod tv
-// ];
 
 // required modules
 const { Tray, Menu } = require("electron");
 const request = require("request");
 const shell = require("electron").shell;
+const { app } = require("electron");
 
 var nodesToAsk = []; // array holiding list of adresses of nodes to ask for info
 
@@ -136,6 +131,9 @@ var populateContextMenu = function (allNodes, tray) {
         },
       },
       {
+        type: "separator",
+      },
+      {
         label: "Brightness",
         type: "normal",
         enabled: false,
@@ -241,7 +239,9 @@ var populateContextMenu = function (allNodes, tray) {
     {
       label: "❌ Quit",
       click() {
-        app.quit();
+        console.log("trying to quit...");
+        // app.isQuitting = true;
+        app.exit(0);
       },
     }
   );
@@ -305,17 +305,6 @@ var populateContextMenu = function (allNodes, tray) {
 };
 
 var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
-  adressList.forEach((element, index) => {
-    // address should look like this: http://192.168.1.41/
-    adressList[index] = "http://" + adressList[index] + "/";
-  });
-
-  console.log(
-    "askAllNodesForInfoAndUpdateContextMenu(): will now sent requests here: "
-      .brightCyan
-  );
-  console.log(adressList);
-
   var nodesInfoArray = []; // array of objects to fill with info about nodes
   nodeCount = adressList.length;
 
@@ -324,8 +313,11 @@ var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
 
   // sent requests to all nodes on address list
   for (let i = 0; i < nodeCount; i++) {
-    currentAddress = adressList[i];
-
+    currentAddress = "http://" + adressList[i] + "/";
+    console.log(
+      "askAllNodesForInfoAndUpdateContextMenu() sending GET to: ".green +
+        currentAddress.brightGreen
+    );
     // ask for name and synch button status
     request.get(currentAddress + "json", function (error, response, body) {
       if (!error && response.statusCode == 200) {
@@ -399,6 +391,15 @@ var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
               });
           }
         }
+      } else {
+        console.log(
+          (
+            "askAllNodesForInfoAndUpdateContextMenu(): couldn't get node status for " +
+            currentAddress +
+            " error: " +
+            error
+          ).red
+        );
       }
     });
   }

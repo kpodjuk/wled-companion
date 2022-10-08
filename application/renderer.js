@@ -19,15 +19,23 @@ var getDetectedDevicesInterval = window.setInterval(() => {
 }, getDetectedDevicesIntervalMs);
 
 const getDetectedDevices = async () => {
-  // in here we will get array with found devices from backend, hopefully
   const response = await window.versions.getDetectedDevices();
-  document.getElementById("foundWLEDDevices").innerText = response;
+  document.getElementById("foundWLEDDevices").innerHTML = "<ul>";
+  // iterate over each found node
+  response.forEach((element) => {
+    document.getElementById("foundWLEDDevices").innerHTML +=
+      "<li>" + element + "</li>";
+  });
+  document.getElementById("foundWLEDDevices").innerHTML += "</ul>";
 };
 
 const startSearching = async () => {
   const reponse = await window.versions.startSearching();
+  document.getElementById("startSearching").innerText = "Query sent!";
 };
 
 const proceedWithFoundModules = async () => {
   const response = await window.versions.proceedWithFoundModules();
+  document.getElementById("continue").innerText =
+    "Requesting information from nodes...";
 };

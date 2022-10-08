@@ -1,7 +1,7 @@
 // to run:
 // nodemon --exec npm run start
 // to build:
-// npm install --save-dev @electron-forge/cli
+// npm install --save-1 @electron-forge/cli
 // npx electron-forge import
 // electron-forge make
 
@@ -17,6 +17,7 @@ const path = require("path");
 // my modules:
 const trayIconHandler = require("./trayIconHandler.js");
 const mdnsHandler = require("./mdnsHandler.js");
+const configFileHandler = require("./configFileHandler.js");
 
 app.setUserTasks([
   {
@@ -33,9 +34,8 @@ app.setUserTasks([
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  if (DEBUGENABLED) {
-    createWindow();
-  }
+  createWindow();
+
   // initialize mdns for discovery of nodes
   mdnsHandler.init();
 });
@@ -43,8 +43,8 @@ app.whenReady().then(() => {
 const createWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 600,
+    width: 500,
+    height: 500,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
@@ -54,28 +54,6 @@ const createWindow = () => {
     // minimizable: false
   });
 
-  // frontend requests handlers
-  ipcMain.handle("getDetectedDevices", () =>
-    mdnsHandler.returnDetectedDevices()
-  );
-
-  ipcMain.handle("startSearching", () => mdnsHandler.startSearching());
-
-  ipcMain.handle("proceedWithFoundModules", () => {
-    // console.log(
-    //   "Got the module list! mDNS handler passes this to tray icon handler: "
-    //     .green
-    // );
-    // console.log(mdnsHandler.returnDetectedDevices());
-
-    // turn off mdns answers listening
-    mdnsHandler.stopAwaitingResponses();
-
-    // build tray context menu
-    trayIconHandler.passNodeList(mdnsHandler.returnDetectedDevices());
-    trayIconHandler.init();
-  });
-
   // and load the index.html of the app.
   mainWindow.loadFile("application/index.html");
 
@@ -83,4 +61,35 @@ const createWindow = () => {
   if (DEBUGENABLED) {
     mainWindow.webContents.openDevTools();
   }
+
+  // this handler is activated after initial config is done and nodes found
+  ipcMain.handle("proceedWithFoundModules", () => {
+    // build tray context menu
+    trayIconHandler.passNodeList(mdnsHandler.returnDetectedDevices());
+    trayIconHandler.init();
+
+    // save found nodes in config
+    // configFileHandler.writeConfigFile((config = "testConfig"));
+
+    // Close window, configuration done
+    mainWindow.close();
+
+    // turn off mdns answers listening
+    mdnsHandler.stopAwaitingResponses();
+  });
+
+  // window close event handler, prevents default behavior of closing the whole app,
+  // we want to keep the tray icon
+  mainWindow.on("close", function (event) {
+    if (!app.isQuiting) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+
+    return false;
+  });
 };
+
+// frontend requests handlers
+ipcMain.handle("getDetectedDevices", () => mdnsHandler.returnDetectedDevices());
+ipcMain.handle("startSearching", () => mdnsHandler.startSearching());
