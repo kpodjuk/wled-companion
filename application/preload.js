@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld("versions", {
   electron: () => process.versions.electron,
 
   getDiscoveredNodes: () => ipcRenderer.invoke("getDiscoveredNodes"),
+  getDiscoveredNodesWithNames: () => ipcRenderer.invoke("getDiscoveredNodesWithNames"),
   getExistingNodes: () => ipcRenderer.invoke("getExistingNodes"),
   startSearching: () => ipcRenderer.invoke("startSearching"),
   proceedWithFoundModules: () => ipcRenderer.invoke("proceedWithFoundModules"),

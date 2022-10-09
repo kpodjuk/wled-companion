@@ -1,7 +1,14 @@
 const request = require("request");
 
-var foundWLEDDevices = ["192.168.1.42", "192.168.1.41"]; // initialized with some modules for debug purposes
+// variable with dicovered nodes, initialized with some modules for debug purposes
+var foundWLEDDevices = [
+  "192.168.1.59", // above shelf
+  // "192.168.1.42" // below shelf
+];
 // var foundWLEDDevices = [];
+
+var discoveredNodes = []; // array of objects with names+addresses of discovered nodes
+
 
 var mdns = require("multicast-dns")({
   multicast: true, // use udp multicasting
@@ -109,8 +116,29 @@ module.exports = {
   },
 
   returnDetectedDevices: function () {
-    // return array with detected WLED nodes
     return foundWLEDDevices;
+  },
+
+  returnDetectedDevicesWithNames: function () {
+    // console.log("returnDetectedDevices(): ".brightMagenta);
+    // console.log(discoveredNodes);
+    foundWLEDDevices.forEach((deviceAddress) => {
+      request.get("http://" + deviceAddress + "/json/info", (error, response, body) => {
+        if (!error && response.statusCode == 200) {
+          var index = discoveredNodes.findIndex(x => x.address == deviceAddress);
+          if (index == -1) {
+            // node with that adress wasn't in the array before, push
+            discoveredNodes.push({
+              address: deviceAddress,
+              name: JSON.parse(body)["name"]
+            })
+          }
+        } else {
+
+        }
+      });
+    })
+    return discoveredNodes;
   },
 };
 

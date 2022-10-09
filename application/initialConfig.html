@@ -6,8 +6,10 @@
 <head>
   <meta charset="UTF-8" />
   <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+  <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" /> -->
   <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src * self blob: data: gap:; style-src * self 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * self 'unsafe-inline' blob: data: gap:; connect-src self * 'unsafe-inline' blob: data: gap:; frame-src * self blob: data: gap:;">
 
   <!-- Bootstrap CSS -->
   <!-- <link -->
@@ -15,17 +17,30 @@
   <!-- href="./contents/bootstrap/5.2.0/css/bootstrap.min.css" -->
   <!-- /> -->
 
+  <link rel="stylesheet" type="text/css" href="./style.css">
+
+
   <title>WLED companion settings</title>
 </head>
 
 <body>
-  <h1><b>Initial</b> config</h1>
+  <h1>Initial config</h1>
   <!-- <button id="startSearching">Send query</button> -->
   <button id="addManually">Add manually</button>
-  <h1>Discovered nodes:</h1>
-  <div id="foundWLEDDevices"></div>
-  <button id="continue">Continue</button>
+  <h1>💾 Your nodes:</h1>
+  <div id="existingNodes"></div>
+  <h1>✨ Discovered nodes:</h1>
+  <button id="continue">Save</button>
 
+  <div id="discoveredNodes"></div>
+  <div class="wrapper">
+    <span class="dot"></span>
+    <div class="dots">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
   <script src="./initialConfigRenderer.js"></script>
 </body>
 

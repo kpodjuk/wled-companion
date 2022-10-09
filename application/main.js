@@ -63,8 +63,8 @@ var mainWindow;
 const createWindow = () => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 500,
+    width: 1300,
+    height: 900,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
@@ -111,8 +111,8 @@ const applicationInit = () => {
 
     // save found nodes in config
     let config = {
-      foundNodes: mdnsHandler.returnDetectedDevices(),
-      initialConfigDone: true
+      foundNodes: mdnsHandler.returnDetectedDevices()
+      // initialConfigDone: true
     }
     configFileHandler.writeConfigFile(config);
 
@@ -126,5 +126,6 @@ const applicationInit = () => {
 
 // frontend requests handlers
 ipcMain.handle("getDiscoveredNodes", () => mdnsHandler.returnDetectedDevices());
+ipcMain.handle("getDiscoveredNodesWithNames", () => mdnsHandler.returnDetectedDevicesWithNames());
 ipcMain.handle("getExistingNodes", () => configFileHandler.readConfigFile());
 ipcMain.handle("startSearching", () => mdnsHandler.startSearching());

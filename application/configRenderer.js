@@ -37,7 +37,13 @@ const getDiscoveredNodes = async () => {
 };
 
 const addNode = async (nodeAddress) => {
-  console.log("addNode(): " + nodeAddress)
+  console.log("addNode(): " + nodeAddress);
+
+  // make sure it isn't already on the list and add it if it's not
+  if (document.getElementById('existingNodes').innerHTML.search(nodeAddress) == -1) {
+    document.getElementById('existingNodes').innerHTML += "<li>" + nodeAddress + "</li>";
+  }
+
 }
 
 const getExistingNodes = async () => {
@@ -45,7 +51,7 @@ const getExistingNodes = async () => {
   response = await window.versions.getExistingNodes();
   // reponse is whole config file, only adresses are needed here
   response = response.foundNodes;
-  console.log(response);
+  // console.log(response);
   if (response.length == 0) {
     // do nothing
   } else {
@@ -54,7 +60,7 @@ const getExistingNodes = async () => {
     // iterate over each found node
     response.forEach((element) => {
       document.getElementById("existingNodes").innerHTML +=
-        "<li id='" + element + "'>" + element + "<button id='deleteNode" + element + "'> 🗑</button></li>"
+        "<li id='" + element + "'>" + element + " <button id='deleteNode" + element + "'> 🗑</button></li>"
     });
     document.getElementById("existingNodes").innerHTML += "</ul>";
   }

@@ -241,7 +241,10 @@ var populateContextMenu = function (allNodes, tray) {
     {
       label: "⚙ Companion settings",
       click() {
-        console.log("Showing module discovery window");
+        console.log("Showing module discovery window".blue);
+
+        // todo: check if window isn't opened already
+
         // Create the browser window.
         const mainWindow = new BrowserWindow({
           width: 1000,
@@ -260,6 +263,9 @@ var populateContextMenu = function (allNodes, tray) {
 
         // and load the index.html of the app.
         mainWindow.loadFile("application/config.html");
+
+        // initialize mdns for discovery of nodes
+        mdnsHandler.init();
 
         // start searching as soon as window is opened
         mdnsHandler.startSearching();
