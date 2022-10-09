@@ -12,13 +12,14 @@ module.exports = {
       if (e.errno == -4058) {
         console.log("readConfigFile(): Config file doesn't exist!: ".magenta);
       } else {
-
       }
 
       return "";
     }
 
-    console.log("readConfigFile(): Reading config file succesful!, contents: ".green);
+    console.log(
+      "readConfigFile(): Reading config file succesful!, contents: ".green
+    );
     console.log(configFile);
 
     return JSON.parse(configFile);
@@ -32,7 +33,6 @@ module.exports = {
       if (e) {
         console.log("Failed to save the file: ".red);
         console.log(e);
-
       }
     }
   },

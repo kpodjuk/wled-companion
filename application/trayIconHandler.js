@@ -14,7 +14,6 @@ const mdnsHandler = require("./mdnsHandler.js");
 
 var nodesToAsk = []; // array holiding list of adresses of nodes to ask for info
 
-
 var jsonPrint = function (json) {
   return JSON.stringify(json, null, 2).brightMagenta;
 };
@@ -60,16 +59,16 @@ var populateContextMenu = function (allNodes, tray) {
           // send request to switch preset to node
           request.get(
             allNodes[i].address +
-            "/win&PL=" +
-            allNodes[i].avaliablePresets[j].id,
+              "/win&PL=" +
+              allNodes[i].avaliablePresets[j].id,
             (error, response, body) => {
               if (error) throw error;
               if (!error && response.statusCode == 200) {
                 console.log(
                   "200 Successfully switched preset: ".green +
-                  allNodes[i].address +
-                  "/win&PL=" +
-                  allNodes[i].avaliablePresets[j].id
+                    allNodes[i].address +
+                    "/win&PL=" +
+                    allNodes[i].avaliablePresets[j].id
                 );
               }
             }
@@ -160,7 +159,7 @@ var populateContextMenu = function (allNodes, tray) {
 
                 console.log(
                   "200 Got brightness before incrementing: ".green +
-                  desiredBrightness
+                    desiredBrightness
                 );
                 // increment
                 desiredBrightness += brightnessStepSize;
@@ -177,9 +176,9 @@ var populateContextMenu = function (allNodes, tray) {
                       console.log(
                         "200 Successfully sent brightness UP request, request address: "
                           .green +
-                        allNodes[i].address +
-                        "/win&A=" +
-                        desiredBrightness
+                          allNodes[i].address +
+                          "/win&A=" +
+                          desiredBrightness
                       );
                     }
                   }
@@ -208,7 +207,7 @@ var populateContextMenu = function (allNodes, tray) {
 
                 console.log(
                   "200 Got brightness before decrementing: ".green +
-                  desiredBrightness
+                    desiredBrightness
                 );
                 // increment
                 desiredBrightness -= brightnessStepSize;
@@ -225,9 +224,9 @@ var populateContextMenu = function (allNodes, tray) {
                       console.log(
                         "200 Successfully sent brightness DOWN request, request address: "
                           .green +
-                        allNodes[i].address +
-                        "/win&A=" +
-                        desiredBrightness
+                          allNodes[i].address +
+                          "/win&A=" +
+                          desiredBrightness
                       );
                     }
                   }
@@ -265,7 +264,6 @@ var populateContextMenu = function (allNodes, tray) {
 
         mainWindow.webContents.openDevTools();
 
-
         // and load the index.html of the app.
         mainWindow.loadFile("application/config.html");
 
@@ -284,8 +282,7 @@ var populateContextMenu = function (allNodes, tray) {
           }
           return false;
         });
-
-      }
+      },
     },
     {
       label: "❌ Quit",
@@ -356,25 +353,29 @@ var populateContextMenu = function (allNodes, tray) {
 };
 
 var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
-  var unrespondingNodes = [];
-
   var nodesInfoArray = []; // array of objects to fill with info about nodes
   nodeCount = adressList.length;
 
-  // temporary array replacement
-  // adressList = ["http://192.168.1.41/", "http://192.168.1.59/"];
-  let failureCounter = 0; // how many nodes have failed first get request
   // sent requests to all nodes on address list
   for (let i = 0; i < nodeCount; i++) {
     currentAddress = "http://" + adressList[i] + "/";
     console.log(
       "askAllNodesForInfoAndUpdateContextMenu() sending GET to: ".green +
-      currentAddress.brightGreen
+        currentAddress.brightGreen
     );
+
     // ask for name and synch button status
     request.get(currentAddress + "json", function (error, response, body) {
+      if (error) {
+        nodesInfoArray.push({
+          address: this.host,
+          error: true,
+        });
+      }
+
       if (!error && response.statusCode == 200) {
-        // jsonPrint(body);
+        // console.log("Got answer on first GET on address: ".green + this.host);
+
         const jsonObject = JSON.parse(body);
         nodesInfoArray.push({
           // id: nodesInfoArray.length, // not sure if needed
@@ -382,96 +383,83 @@ var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
           address: response.request.uri.protocol + "//" + response.request.host,
           synchState: jsonObject["state"]["udpn"],
           avaliablePresets: [],
+          error: false,
         });
+      }
+      // check if got response from everyone
+      if (nodesInfoArray.length == nodeCount) {
+        console.log("--- Catched results of all requests ---".brightBlue);
+        // count nodes with errors
+        let nodesWithErrors = 0;
+        let presetResponsesCounter = 0;
 
-        // check if got response from everyone
-        if (nodesInfoArray.length == nodeCount) {
-          // ask each node for avaliable presets
-          let nodesFilledWithPresetsCounter = 0; // to count how many nodes have filled presets array
-          for (let z = 0; z < nodeCount; z++) {
-            (currentAddress = nodesInfoArray[z].address + "/presets.json"),
-              request.get(currentAddress, function (error, response, body) {
-                if (!error && response.statusCode == 200) {
-                  const bodyObject = JSON.parse(body);
-                  let presetIds = Object.keys(bodyObject);
-                  let presetArray = [];
+        nodesInfoArray.forEach((node, index) => {
+          if (node.error) nodesWithErrors++;
+          console.log(
+            (
+              "[" +
+              index +
+              "]" +
+              "address: " +
+              node.address +
+              "\t\t\t\t\terror: " +
+              node.error
+            ).brightBlue
+          );
+          // check if node is error free after first request, otherwise there's no sense asking it for presets
+          if (node.error) {
+            // console.log("Skipping this because it already has error!".red);
+          } else {
+            request.get(
+              node.address + "/presets.json",
+              function (error, response, body) {
+                presetResponsesCounter++;
+                // console.log(
+                //   "Get response from /presets.json, address:" + node.address
+                // );
 
-                  // iterate through every preset and add it to array
-                  for (
-                    let presetCounter = 0;
-                    presetCounter < presetIds.length;
-                    presetCounter++
+                const bodyObject = JSON.parse(body);
+                let presetIds = Object.keys(bodyObject);
+                let presetArray = [];
+
+                // iterate through every preset and add it to array
+                for (
+                  let presetCounter = 0;
+                  presetCounter < presetIds.length;
+                  presetCounter++
+                ) {
+                  if (
+                    typeof bodyObject[presetIds[presetCounter]]["n"] !==
+                    "undefined"
                   ) {
-                    if (
-                      typeof bodyObject[presetIds[presetCounter]]["n"] !==
-                      "undefined"
-                    ) {
-                      // only push presets that don't have undefined name
-                      presetArray.push({
-                        id: presetIds[presetCounter],
-                        name: bodyObject[presetIds[presetCounter]]["n"],
-                      });
-                    }
-                  }
-
-                  nodeAddress =
-                    response.request.uri.protocol +
-                    "//" +
-                    response.request.host;
-
-                  // complete node record  with created array, identify node by address
-                  nodesInfoArray.forEach((element) => {
-                    if (element.address == nodeAddress) {
-                      element.avaliablePresets = presetArray;
-                      // console.log(
-                      //   "Got presets for " +
-                      //     nodeAddress +
-                      //     " counter=" +
-                      //     nodesFilledWithPresetsCounter +
-                      //     " presetArray= "
-                      // );
-                      // console.log(presetArray);
-                    }
-                  });
-
-                  // checking if all nodes have populated presets here...
-                  nodesFilledWithPresetsCounter++;
-                  console.log("nodesFilledWithPresetsCounter: ");
-
-                  console.log(nodesFilledWithPresetsCounter)
-                  if (nodesFilledWithPresetsCounter == nodeCount - failureCounter) {
-                    // all done, all nodes have presets now, we can now create context menu
-                    console.log("nodesInfoArray:".magenta);
-                    console.log(JSON.stringify(nodesInfoArray));
-                    console.log("askAllNodesForInfoAndUpdateContextMenu()".blue);
-                    console.log("Total nodes:" + nodeCount);
-                    console.log("Fails:" + failureCounter);
-
-
-
-                    // find out which nodes failed
-
-                    populateContextMenu(nodesInfoArray, tray);
+                    // only push presets that don't have undefined name
+                    presetArray.push({
+                      id: presetIds[presetCounter],
+                      name: bodyObject[presetIds[presetCounter]]["n"],
+                    });
                   }
                 }
-              });
+
+                // console.log(("Done preset array for " + node.address).yellow);
+                // console.log(presetArray);
+
+                // add preset array to node object
+                node.avaliablePresets = presetArray;
+
+                if (presetResponsesCounter == nodeCount - nodesWithErrors) {
+                  // before giving array to populateContextMenu() clean it up from nodes with errors
+                  const cleanNodesInfoArray = nodesInfoArray.filter(
+                    (node) => node.error == false
+                  );
+                  // reset request counters
+                  nodesWithErrors = 0;
+                  presetResponsesCounter = 0;
+                  populateContextMenu(cleanNodesInfoArray, tray);
+                }
+              }
+            );
           }
-        }
-      } else {
-        failureCounter++;
-        console.log(("askAllNodesForInfoAndUpdateContextMenu(): couldn't get node status, error: " + error).red);
-        unrespondingNodes.push(currentAddress);
-        console.log("unrespondingNodes:");
-        console.log(unrespondingNodes);
-        if (failureCounter == nodeCount) {
-          // all requests failed!
-
-          console.log("All modules are unavailable!".red);
-          // should fill nodesInfoArray with fake data
-        }
-
-        console.log("failureCounter=" + failureCounter);
-        // populateContextMenu()
+        });
       }
     });
   }
@@ -496,8 +484,6 @@ module.exports = {
     // create tray icon
     tray = new Tray(trayIconPath);
 
-    // console.log("trayIconHandler(): started init()".brightCyan);
-
     // ask discovered nodes about required info and populate context menu, once all responsess are received
     askAllNodesForInfoAndUpdateContextMenu(nodesToAsk, tray);
 
@@ -505,7 +491,7 @@ module.exports = {
     if (refreshContextMenuMs > 0) {
       setInterval(() => {
         askAllNodesForInfoAndUpdateContextMenu(nodesToAsk, tray);
-        console.log("Refreshing context menu...".blue);
+        console.log("------ Refreshing context menu ------".brightMagenta);
       }, refreshContextMenuMs);
     }
   },
