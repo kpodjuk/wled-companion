@@ -76,7 +76,7 @@ const createWindow = () => {
   });
 
   // and load the index.html of the app.
-  mainWindow.loadFile("application/index.html");
+  mainWindow.loadFile("application/initialConfig.html");
 
   // Open the DevTools.
   if (DEBUGENABLED) {

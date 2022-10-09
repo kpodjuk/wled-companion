@@ -54,16 +54,16 @@ var populateContextMenu = function (allNodes, tray) {
           // send request to switch preset to node
           request.get(
             allNodes[i].address +
-              "/win&PL=" +
-              allNodes[i].avaliablePresets[j].id,
+            "/win&PL=" +
+            allNodes[i].avaliablePresets[j].id,
             (error, response, body) => {
               if (error) throw error;
               if (!error && response.statusCode == 200) {
                 console.log(
                   "200 Successfully switched preset: ".green +
-                    allNodes[i].address +
-                    "/win&PL=" +
-                    allNodes[i].avaliablePresets[j].id
+                  allNodes[i].address +
+                  "/win&PL=" +
+                  allNodes[i].avaliablePresets[j].id
                 );
               }
             }
@@ -154,7 +154,7 @@ var populateContextMenu = function (allNodes, tray) {
 
                 console.log(
                   "200 Got brightness before incrementing: ".green +
-                    desiredBrightness
+                  desiredBrightness
                 );
                 // increment
                 desiredBrightness += brightnessStepSize;
@@ -171,9 +171,9 @@ var populateContextMenu = function (allNodes, tray) {
                       console.log(
                         "200 Successfully sent brightness UP request, request address: "
                           .green +
-                          allNodes[i].address +
-                          "/win&A=" +
-                          desiredBrightness
+                        allNodes[i].address +
+                        "/win&A=" +
+                        desiredBrightness
                       );
                     }
                   }
@@ -202,7 +202,7 @@ var populateContextMenu = function (allNodes, tray) {
 
                 console.log(
                   "200 Got brightness before decrementing: ".green +
-                    desiredBrightness
+                  desiredBrightness
                 );
                 // increment
                 desiredBrightness -= brightnessStepSize;
@@ -219,9 +219,9 @@ var populateContextMenu = function (allNodes, tray) {
                       console.log(
                         "200 Successfully sent brightness DOWN request, request address: "
                           .green +
-                          allNodes[i].address +
-                          "/win&A=" +
-                          desiredBrightness
+                        allNodes[i].address +
+                        "/win&A=" +
+                        desiredBrightness
                       );
                     }
                   }
@@ -237,23 +237,39 @@ var populateContextMenu = function (allNodes, tray) {
   // add section with quit button
   menuTemplate.push(
     { type: "separator" },
-    { label: "✨ Discover new modules", 
-  click() {
-    console.log("Showing module discovery window");
-      // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 500,
-    height: 500,
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+    {
+      label: "✨ Companion settings",
+      click() {
+        console.log("Showing module discovery window");
+        // Create the browser window.
+        const mainWindow = new BrowserWindow({
+          width: 500,
+          height: 500,
+          webPreferences: {
+            preload: path.join(__dirname, "preload.js"),
+          },
+          resizable: true,
+          fullscreenable: false,
+          maximizable: false,
+          // minimizable: false
+        });
+
+        // and load the index.html of the app.
+        mainWindow.loadFile("application/config.html");
+
+        // window close event handler, prevents default behavior of closing the whole app,
+        // we want to keep the tray icon
+        mainWindow.on("close", function (event) {
+          if (!app.isQuiting) {
+            event.preventDefault();
+            mainWindow.hide();
+          }
+
+          return false;
+        });
+
+      }
     },
-    resizable: true,
-    fullscreenable: false,
-    maximizable: false,
-    // minimizable: false
-  });
-  }
-  },
     {
       label: "❌ Quit",
       click() {
@@ -334,7 +350,7 @@ var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
     currentAddress = "http://" + adressList[i] + "/";
     console.log(
       "askAllNodesForInfoAndUpdateContextMenu() sending GET to: ".green +
-        currentAddress.brightGreen
+      currentAddress.brightGreen
     );
     // ask for name and synch button status
     request.get(currentAddress + "json", function (error, response, body) {

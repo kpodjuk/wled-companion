@@ -128,3 +128,4 @@ dist
 
 # helpful test files, to know how responses look like
 jsony do testowania/
+configuration.json
