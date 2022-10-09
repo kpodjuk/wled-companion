@@ -35,6 +35,8 @@ app.setUserTasks([
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
 
+
+
   applicationInit();
 
   // read config file
@@ -109,7 +111,7 @@ const applicationInit = () => {
     trayIconHandler.passNodeList(mdnsHandler.returnDetectedDevices());
     trayIconHandler.init();
 
-    // save found nodes in config
+    // save found nodes in config, but only those that are present on "your nodes" list
     let config = {
       foundNodes: mdnsHandler.returnDetectedDevices()
       // initialConfigDone: true
@@ -122,7 +124,21 @@ const applicationInit = () => {
     // turn off mdns answers listening
     mdnsHandler.stopAwaitingResponses();
   });
+
+
+  ipcMain.on('send-desired-nodes', handleNodeSaving);
+
+
 };
+
+
+function handleNodeSaving(event, nodes) {
+  console.log("Got node list from renderer " + nodes);
+
+  // const webContents = event.sender
+  // const win = BrowserWindow.fromWebContents(webContents)
+  // win.setTitle(title)
+}
 
 // frontend requests handlers
 ipcMain.handle("getDiscoveredNodes", () => mdnsHandler.returnDetectedDevices());

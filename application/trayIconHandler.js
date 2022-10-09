@@ -14,6 +14,11 @@ const mdnsHandler = require("./mdnsHandler.js");
 
 var nodesToAsk = []; // array holiding list of adresses of nodes to ask for info
 
+
+var jsonPrint = function (json) {
+  return JSON.stringify(json, null, 2).brightMagenta;
+};
+
 // populate context menu with info that was gathered from nodes in askAllNodesForInfoAndUpdateContextMenu()
 var populateContextMenu = function (allNodes, tray) {
   console.log(
@@ -351,12 +356,14 @@ var populateContextMenu = function (allNodes, tray) {
 };
 
 var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
+  var unrespondingNodes = [];
+
   var nodesInfoArray = []; // array of objects to fill with info about nodes
   nodeCount = adressList.length;
 
   // temporary array replacement
   // adressList = ["http://192.168.1.41/", "http://192.168.1.59/"];
-
+  let failureCounter = 0; // how many nodes have failed first get request
   // sent requests to all nodes on address list
   for (let i = 0; i < nodeCount; i++) {
     currentAddress = "http://" + adressList[i] + "/";
@@ -367,7 +374,7 @@ var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
     // ask for name and synch button status
     request.get(currentAddress + "json", function (error, response, body) {
       if (!error && response.statusCode == 200) {
-        // printjson(body);
+        // jsonPrint(body);
         const jsonObject = JSON.parse(body);
         nodesInfoArray.push({
           // id: nodesInfoArray.length, // not sure if needed
@@ -429,8 +436,21 @@ var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
 
                   // checking if all nodes have populated presets here...
                   nodesFilledWithPresetsCounter++;
-                  if (nodesFilledWithPresetsCounter == nodeCount) {
+                  console.log("nodesFilledWithPresetsCounter: ");
+
+                  console.log(nodesFilledWithPresetsCounter)
+                  if (nodesFilledWithPresetsCounter == nodeCount - failureCounter) {
                     // all done, all nodes have presets now, we can now create context menu
+                    console.log("nodesInfoArray:".magenta);
+                    console.log(JSON.stringify(nodesInfoArray));
+                    console.log("askAllNodesForInfoAndUpdateContextMenu()".blue);
+                    console.log("Total nodes:" + nodeCount);
+                    console.log("Fails:" + failureCounter);
+
+
+
+                    // find out which nodes failed
+
                     populateContextMenu(nodesInfoArray, tray);
                   }
                 }
@@ -438,14 +458,20 @@ var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
           }
         }
       } else {
-        console.log(
-          (
-            "askAllNodesForInfoAndUpdateContextMenu(): couldn't get node status for " +
-            currentAddress +
-            " error: " +
-            error
-          ).red
-        );
+        failureCounter++;
+        console.log(("askAllNodesForInfoAndUpdateContextMenu(): couldn't get node status, error: " + error).red);
+        unrespondingNodes.push(currentAddress);
+        console.log("unrespondingNodes:");
+        console.log(unrespondingNodes);
+        if (failureCounter == nodeCount) {
+          // all requests failed!
+
+          console.log("All modules are unavailable!".red);
+          // should fill nodesInfoArray with fake data
+        }
+
+        console.log("failureCounter=" + failureCounter);
+        // populateContextMenu()
       }
     });
   }

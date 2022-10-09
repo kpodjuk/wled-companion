@@ -11,8 +11,11 @@ contextBridge.exposeInMainWorld("versions", {
   getExistingNodes: () => ipcRenderer.invoke("getExistingNodes"),
   startSearching: () => ipcRenderer.invoke("startSearching"),
   proceedWithFoundModules: () => ipcRenderer.invoke("proceedWithFoundModules"),
-  // we can also expose variables, not just functions
 });
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  sendDesiredNodes: (nodes) => ipcRenderer.send('send-desired-nodes', nodes)
+})
 
 // All of the Node.js APIs are available in the preload process.
 // It has the same sandbox as a Chrome extension.

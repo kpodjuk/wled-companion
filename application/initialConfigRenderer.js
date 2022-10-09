@@ -1,5 +1,6 @@
 const getDetectedNodesRefreshIntervalMs = 5000;
 
+var desiredNodes = [];// array holding all nodes that users desires to be saved in config file
 
 // even listeners for buttons
 document.addEventListener("click", (e) => {
@@ -10,10 +11,6 @@ document.addEventListener("click", (e) => {
     console.log("Deleting node: " + e.target.id);
     deleteNode(e.target.id.slice(10));
   }
-  // else if (e.target.id.startsWith('addNode')) {
-  //   addNode(e.target.id.slice(7));
-  // }
-
 });
 
 var getDetectedDevicesInterval = window.setInterval(() => {
@@ -29,23 +26,33 @@ const getDiscoveredNodes = async () => {
     document.getElementById("discoveredNodes").innerHTML = "<ul>";
     // iterate over each found node
     response.forEach((discoveredNode) => {
-      document.getElementById("discoveredNodes").innerHTML +=
-        "<li id='" + discoveredNode.address + "'>" +
-        discoveredNode.address +
-        " - " +
-        discoveredNode.name +
-        " <button onclick='addNode(" +
-        '"' + discoveredNode.address + '"' +
-        ", " +
-        '"' + discoveredNode.name + '"' +
-        ")'" +
-        "'> 🔌</button></li>"
+      // if node is already present in "existingNodes" element don't add it to this list
+      if (document.getElementById('existingNodes').innerHTML.search(discoveredNode.address) == -1) {
+        // console.log("Node" + discoveredNode.address + " is not on existingNodes list");
+
+        document.getElementById("discoveredNodes").innerHTML +=
+          "<li id='" + discoveredNode.address + "'>" +
+          discoveredNode.address +
+          " - " +
+          discoveredNode.name +
+          " <button onclick='addNode(" +
+          '"' + discoveredNode.address + '"' +
+          ", " +
+          '"' + discoveredNode.name + '"' +
+          ")'" +
+          "'> 🔌</button></li>"
+      } else {
+        // console.log("Node" + discoveredNode.address + " is already on list");
+      }
     });
     document.getElementById("discoveredNodes").innerHTML += "</ul>";
   }
-};
+}
+
 
 const addNode = async (nodeAddress, nodeName) => {
+
+
   console.log("addNode(): " + nodeAddress);
   // make sure it isn't already on the list and add it if it's not
   if (document.getElementById('existingNodes').innerHTML.search(nodeAddress) == -1) {
@@ -55,6 +62,12 @@ const addNode = async (nodeAddress, nodeName) => {
       " - " +
       nodeName +
       "</li>";
+
+    // save in array to later send to main.js
+    desiredNodes.push(nodeAddress);
+    window.electronAPI.sendDesiredNodes(desiredNodes);
+
+
   }
 
 }
@@ -87,6 +100,7 @@ const proceedWithFoundModules = async () => {
   if (document.getElementById('discoveredNodes').innerHTML == "") {
     alert("Can't continue, no modules found");
   } else {
+    // line below executes 
     const response = await window.versions.proceedWithFoundModules();
     document.getElementById("continue").innerText =
       "Requesting information from nodes...";

@@ -4,6 +4,7 @@
   "description": "WLED companion",
   "main": "application/main.js",
   "scripts": {
+    "autoRebuild": "nodemon --exec npm run start",
     "start": "electron-forge start",
     "test": "echo \"Error: no test specified\" && exit 1",
     "package": "electron-forge package",
