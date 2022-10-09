@@ -10,6 +10,7 @@ const request = require("request");
 const shell = require("electron").shell;
 const { app, BrowserWindow } = require("electron");
 const path = require("path");
+const mdnsHandler = require("./mdnsHandler.js");
 
 var nodesToAsk = []; // array holiding list of adresses of nodes to ask for info
 
@@ -238,12 +239,12 @@ var populateContextMenu = function (allNodes, tray) {
   menuTemplate.push(
     { type: "separator" },
     {
-      label: "✨ Companion settings",
+      label: "⚙ Companion settings",
       click() {
         console.log("Showing module discovery window");
         // Create the browser window.
         const mainWindow = new BrowserWindow({
-          width: 500,
+          width: 1000,
           height: 500,
           webPreferences: {
             preload: path.join(__dirname, "preload.js"),
@@ -254,8 +255,14 @@ var populateContextMenu = function (allNodes, tray) {
           // minimizable: false
         });
 
+        mainWindow.webContents.openDevTools();
+
+
         // and load the index.html of the app.
         mainWindow.loadFile("application/config.html");
+
+        // start searching as soon as window is opened
+        mdnsHandler.startSearching();
 
         // window close event handler, prevents default behavior of closing the whole app,
         // we want to keep the tray icon
@@ -264,7 +271,6 @@ var populateContextMenu = function (allNodes, tray) {
             event.preventDefault();
             mainWindow.hide();
           }
-
           return false;
         });
 

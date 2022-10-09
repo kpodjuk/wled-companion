@@ -1,6 +1,4 @@
 const fs = require("fs");
-const { config } = require("process");
-// const { config } = require("process");
 
 module.exports = {
   readConfigFile: () => {

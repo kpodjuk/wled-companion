@@ -2,16 +2,15 @@ const getDetectedDevicesIntervalMs = 5000;
 
 // even listeners for buttons
 document.addEventListener("click", (e) => {
-  switch (e.target.id) {
-    case "startSearching": {
-      startSearching();
-      break;
-    }
-    case "continue": {
-      proceedWithFoundModules();
-      break;
-    }
+
+  if (e.target.id == 'continue') {
+    proceedWithFoundModules();
+  } else if (e.target.id.startsWith('deleteNode')) {
+    console.log("Deleting node: " + e.target.id);
+    deleteNode(e.target.id.slice(10));
+    // deleteNode(e.target.id.slice(e.target.id.lastIndexOf('deleteNode')))
   }
+
 });
 
 var getDetectedDevicesInterval = window.setInterval(() => {
@@ -28,21 +27,17 @@ const getDetectedDevices = async () => {
     // iterate over each found node
     response.forEach((element) => {
       document.getElementById("foundWLEDDevices").innerHTML +=
-        "<li>" + element + "</li>";
+        "<li id='" + element + "'>" + element + "<button id='deleteNode" + element + "'> 🗑</button></li>"
     });
     document.getElementById("foundWLEDDevices").innerHTML += "</ul>";
   }
-
-
 };
 
 const startSearching = async () => {
   const reponse = await window.versions.startSearching();
-  document.getElementById("startSearching").innerText = "Query sent!";
 };
 
 const proceedWithFoundModules = async () => {
-
   if (document.getElementById('foundWLEDDevices').innerHTML == "") {
     alert("Can't continue, no modules found");
   } else {
@@ -50,5 +45,10 @@ const proceedWithFoundModules = async () => {
     document.getElementById("continue").innerText =
       "Requesting information from nodes...";
   }
+};
+
+const deleteNode = async (nodeAddress) => {
+  console.log("deleteNode(): deleting node with address:" + nodeAddress);
+  document.getElementById(nodeAddress).remove();
 
 };

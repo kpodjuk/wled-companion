@@ -60,7 +60,6 @@ app.whenReady().then(() => {
 // global window var
 var mainWindow;
 
-
 const createWindow = () => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -74,6 +73,9 @@ const createWindow = () => {
     maximizable: false,
     // minimizable: false
   });
+
+  // start searching as soon as window is opened
+  mdnsHandler.startSearching();
 
   // and load the index.html of the app.
   mainWindow.loadFile("application/initialConfig.html");
@@ -99,9 +101,10 @@ const createWindow = () => {
 
 const applicationInit = () => {
 
-
   // this handler is activated after initial config is done and nodes found
   ipcMain.handle("proceedWithFoundModules", () => {
+    console.log("proceedWithFoundModules(): continue button pressed".blue);
+
     // build tray context menu
     trayIconHandler.passNodeList(mdnsHandler.returnDetectedDevices());
     trayIconHandler.init();
@@ -111,8 +114,6 @@ const applicationInit = () => {
       foundNodes: mdnsHandler.returnDetectedDevices(),
       initialConfigDone: true
     }
-
-
     configFileHandler.writeConfigFile(config);
 
     // Close window, configuration done
@@ -121,10 +122,9 @@ const applicationInit = () => {
     // turn off mdns answers listening
     mdnsHandler.stopAwaitingResponses();
   });
-
-
 };
 
 // frontend requests handlers
-ipcMain.handle("getDetectedDevices", () => mdnsHandler.returnDetectedDevices());
+ipcMain.handle("getDiscoveredNodes", () => mdnsHandler.returnDetectedDevices());
+ipcMain.handle("getExistingNodes", () => configFileHandler.readConfigFile());
 ipcMain.handle("startSearching", () => mdnsHandler.startSearching());

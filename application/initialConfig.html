@@ -2,34 +2,31 @@
 
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
-    />
-    <meta
-      http-equiv="X-Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
-    />
 
-    <!-- Bootstrap CSS -->
-    <!-- <link -->
-    <!-- rel="stylesheet" -->
-    <!-- href="./contents/bootstrap/5.2.0/css/bootstrap.min.css" -->
-    <!-- /> -->
+<head>
+  <meta charset="UTF-8" />
+  <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
+  <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
 
-    <title>WLED companion settings</title>
-  </head>
-  <body>
-    <h1>Settings</h1>
-    <button id="startSearching">Send query</button>
-    <button id="addManually">Add manually</button>
-    <h1>Found nodes:</h1>
-    <div id="foundWLEDDevices"></div>
-    <button id="continue">Continue</button>
+  <!-- Bootstrap CSS -->
+  <!-- <link -->
+  <!-- rel="stylesheet" -->
+  <!-- href="./contents/bootstrap/5.2.0/css/bootstrap.min.css" -->
+  <!-- /> -->
 
-    <script src="./renderer.js"></script>
-  </body>
+  <title>WLED companion settings</title>
+</head>
+
+<body>
+  <h1><b>Initial</b> config</h1>
+  <!-- <button id="startSearching">Send query</button> -->
+  <button id="addManually">Add manually</button>
+  <h1>Discovered nodes:</h1>
+  <div id="foundWLEDDevices"></div>
+  <button id="continue">Continue</button>
+
+  <script src="./initialConfigRenderer.js"></script>
+</body>
+
 </html>
