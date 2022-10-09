@@ -8,7 +8,8 @@ const trayIconPath = "images/bulb-icon.png";
 const { Tray, Menu } = require("electron");
 const request = require("request");
 const shell = require("electron").shell;
-const { app } = require("electron");
+const { app, BrowserWindow } = require("electron");
+const path = require("path");
 
 var nodesToAsk = []; // array holiding list of adresses of nodes to ask for info
 
@@ -236,6 +237,23 @@ var populateContextMenu = function (allNodes, tray) {
   // add section with quit button
   menuTemplate.push(
     { type: "separator" },
+    { label: "✨ Discover new modules", 
+  click() {
+    console.log("Showing module discovery window");
+      // Create the browser window.
+  const mainWindow = new BrowserWindow({
+    width: 500,
+    height: 500,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+    },
+    resizable: true,
+    fullscreenable: false,
+    maximizable: false,
+    // minimizable: false
+  });
+  }
+  },
     {
       label: "❌ Quit",
       click() {

@@ -1,6 +1,7 @@
 const request = require("request");
 
-var foundWLEDDevices = [];
+var foundWLEDDevices = ["192.168.1.42", "192.168.1.41"]; // initialized with some modules for debug purposes
+// var foundWLEDDevices = [];
 
 var mdns = require("multicast-dns")({
   multicast: true, // use udp multicasting
@@ -78,7 +79,7 @@ module.exports = {
         );
         console.log(
           "mdnsResponseHandler(): Detected IP: ".green +
-            jsonPrint(response.answers[0].data)
+          jsonPrint(response.answers[0].data)
         );
         // before sending request, make sure it's not already on the list, doesn't make sense to bother it again
         if (!foundWLEDDevices.includes(response.answers[0].data)) {

@@ -20,13 +20,20 @@ var getDetectedDevicesInterval = window.setInterval(() => {
 
 const getDetectedDevices = async () => {
   const response = await window.versions.getDetectedDevices();
-  document.getElementById("foundWLEDDevices").innerHTML = "<ul>";
-  // iterate over each found node
-  response.forEach((element) => {
-    document.getElementById("foundWLEDDevices").innerHTML +=
-      "<li>" + element + "</li>";
-  });
-  document.getElementById("foundWLEDDevices").innerHTML += "</ul>";
+  if (response.length == 0) {
+    // do nothing
+  } else {
+    // print list
+    document.getElementById("foundWLEDDevices").innerHTML = "<ul>";
+    // iterate over each found node
+    response.forEach((element) => {
+      document.getElementById("foundWLEDDevices").innerHTML +=
+        "<li>" + element + "</li>";
+    });
+    document.getElementById("foundWLEDDevices").innerHTML += "</ul>";
+  }
+
+
 };
 
 const startSearching = async () => {
@@ -35,7 +42,13 @@ const startSearching = async () => {
 };
 
 const proceedWithFoundModules = async () => {
-  const response = await window.versions.proceedWithFoundModules();
-  document.getElementById("continue").innerText =
-    "Requesting information from nodes...";
+
+  if (document.getElementById('foundWLEDDevices').innerHTML == "") {
+    alert("Can't continue, no modules found");
+  } else {
+    const response = await window.versions.proceedWithFoundModules();
+    document.getElementById("continue").innerText =
+      "Requesting information from nodes...";
+  }
+
 };

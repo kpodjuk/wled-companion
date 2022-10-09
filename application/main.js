@@ -34,16 +34,37 @@ app.setUserTasks([
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  createWindow();
 
-  // initialize mdns for discovery of nodes
-  mdnsHandler.init();
+  applicationInit();
+
+  // read config file
+  let currentConfig = configFileHandler.readConfigFile();
+
+  if (currentConfig == "") {
+    console.log("First config hasn't been done yet, showing config window!".magenta);
+    createWindow();
+    // initialize mdns for discovery of nodes
+    mdnsHandler.init();
+  } else {
+    // console.log("app.whenReady(): loaded data from existing config!".magenta);
+    // build tray context menu
+    trayIconHandler.passNodeList(currentConfig.foundNodes);
+    console.log("app.whenReady(): Building context menu from existig config, nodes: ".magenta);
+    console.log(currentConfig.foundNodes);
+    trayIconHandler.init();
+
+  }
+
 });
+
+// global window var
+var mainWindow;
+
 
 const createWindow = () => {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 500,
+  mainWindow = new BrowserWindow({
+    width: 1000,
     height: 500,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -62,22 +83,6 @@ const createWindow = () => {
     mainWindow.webContents.openDevTools();
   }
 
-  // this handler is activated after initial config is done and nodes found
-  ipcMain.handle("proceedWithFoundModules", () => {
-    // build tray context menu
-    trayIconHandler.passNodeList(mdnsHandler.returnDetectedDevices());
-    trayIconHandler.init();
-
-    // save found nodes in config
-    // configFileHandler.writeConfigFile((config = "testConfig"));
-
-    // Close window, configuration done
-    mainWindow.close();
-
-    // turn off mdns answers listening
-    mdnsHandler.stopAwaitingResponses();
-  });
-
   // window close event handler, prevents default behavior of closing the whole app,
   // we want to keep the tray icon
   mainWindow.on("close", function (event) {
@@ -88,6 +93,36 @@ const createWindow = () => {
 
     return false;
   });
+
+}
+
+
+const applicationInit = () => {
+
+
+  // this handler is activated after initial config is done and nodes found
+  ipcMain.handle("proceedWithFoundModules", () => {
+    // build tray context menu
+    trayIconHandler.passNodeList(mdnsHandler.returnDetectedDevices());
+    trayIconHandler.init();
+
+    // save found nodes in config
+    let config = {
+      foundNodes: mdnsHandler.returnDetectedDevices(),
+      initialConfigDone: true
+    }
+
+
+    configFileHandler.writeConfigFile(config);
+
+    // Close window, configuration done
+    mainWindow.close();
+
+    // turn off mdns answers listening
+    mdnsHandler.stopAwaitingResponses();
+  });
+
+
 };
 
 // frontend requests handlers

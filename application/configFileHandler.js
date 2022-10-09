@@ -1,19 +1,41 @@
 const fs = require("fs");
+const { config } = require("process");
+// const { config } = require("process");
 
 module.exports = {
   readConfigFile: () => {
-    const configFile = fs.readFileSync("config.json", "utf-8");
+    let configFile;
+
+    try {
+      configFile = fs.readFileSync("configuration.json", "utf-8");
+    } catch (e) {
+      console.log("readConfigFile(): Error while reading config file: ".red);
+      console.log(e);
+      if (e.errno == -4058) {
+        console.log("readConfigFile(): Config file doesn't exist!: ".magenta);
+      } else {
+
+      }
+
+      return "";
+    }
+
+    console.log("readConfigFile(): Reading config file succesful!, contents: ".green);
+    console.log(configFile);
+
     return JSON.parse(configFile);
   },
 
   writeConfigFile: (config) => {
-    // const configFile = JSON.stringify(config);
-    // fs.writeFileSync("config.json", configFile, "utf-8");
     console.log("writeConfigFile(): Writing config file".blue);
     try {
-      fs.writeFileSync("configuration.json", JSON.serialize(config), "utf-8");
+      fs.writeFileSync("configuration.json", JSON.stringify(config), "utf-8");
     } catch (e) {
-      console.log("Failed to save the file !".red);
+      if (e) {
+        console.log("Failed to save the file: ".red);
+        console.log(e);
+
+      }
     }
   },
 };
