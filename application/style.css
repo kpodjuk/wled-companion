@@ -114,7 +114,7 @@ h1 {
     display: none;
 }
 .container {
-    height:900px; /* 20 px less than window height becuse of title bar */
+    height:880px; /* 20 px less than window height becuse of title bar */
     /* and another 300px less, because of logoContainer */
     display: flex; /* or inline-flex */
     /* flex-wrap: nowrap; */
@@ -317,4 +317,5 @@ img {
 .logoContainer {
     display:flex;
     justify-content: center;
+    padding-top: 20px;
 }
