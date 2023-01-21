@@ -9,7 +9,6 @@ var foundWLEDDevices = [
 
 var discoveredNodes = []; // array of objects with names+addresses of discovered nodes
 
-
 var mdns = require("multicast-dns")({
   multicast: true, // use udp multicasting
   // interface: "192.168.4.1", // explicitly specify a network interface. defaults to all
@@ -86,7 +85,7 @@ module.exports = {
         );
         console.log(
           "mdnsResponseHandler(): Detected IP: ".green +
-          jsonPrint(response.answers[0].data)
+            jsonPrint(response.answers[0].data)
         );
         // before sending request, make sure it's not already on the list, doesn't make sense to bother it again
         if (!foundWLEDDevices.includes(response.answers[0].data)) {
@@ -120,24 +119,28 @@ module.exports = {
   },
 
   returnDetectedDevicesWithNames: function () {
-    // console.log("returnDetectedDevices(): ".brightMagenta);
-    // console.log(discoveredNodes);
+    console.log("returnDetectedDevices(): ".brightMagenta);
+    console.log(discoveredNodes);
     foundWLEDDevices.forEach((deviceAddress) => {
-      request.get("http://" + deviceAddress + "/json/info", (error, response, body) => {
-        if (!error && response.statusCode == 200) {
-          var index = discoveredNodes.findIndex(x => x.address == deviceAddress);
-          if (index == -1) {
-            // node with that adress wasn't in the array before, push
-            discoveredNodes.push({
-              address: deviceAddress,
-              name: JSON.parse(body)["name"]
-            })
+      request.get(
+        "http://" + deviceAddress + "/json/info",
+        (error, response, body) => {
+          if (!error && response.statusCode == 200) {
+            var index = discoveredNodes.findIndex(
+              (x) => x.address == deviceAddress
+            );
+            if (index == -1) {
+              // node with that adress wasn't in the array before, push
+              discoveredNodes.push({
+                address: deviceAddress,
+                name: JSON.parse(body)["name"],
+              });
+            }
+          } else {
           }
-        } else {
-
         }
-      });
-    })
+      );
+    });
     return discoveredNodes;
   },
 };

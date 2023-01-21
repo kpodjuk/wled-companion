@@ -2,46 +2,57 @@
 
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="UTF-8" />
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
+    <meta
+      http-equiv="X-Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
 
-<head>
-  <meta charset="UTF-8" />
-  <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-  <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" /> -->
-  <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src * self blob: data: gap:; style-src * self 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * self 'unsafe-inline' blob: data: gap:; connect-src self * 'unsafe-inline' blob: data: gap:; frame-src * self blob: data: gap:;">
+    <!-- Bootstrap CSS -->
+    <!-- <link -->
+    <!-- rel="stylesheet" -->
+    <!-- href="./contents/bootstrap/5.2.0/css/bootstrap.min.css" -->
+    <!-- /> -->
 
-  <!-- Bootstrap CSS -->
-  <!-- <link -->
-  <!-- rel="stylesheet" -->
-  <!-- href="./contents/bootstrap/5.2.0/css/bootstrap.min.css" -->
-  <!-- /> -->
+    <link rel="stylesheet" type="text/css" href="./style.css" />
 
-  <link rel="stylesheet" type="text/css" href="./style.css">
+    <title>WLED companion settings</title>
+  </head>
 
+  <body>
+    <div class="container">
+      <div id="yourNodes">
+        <h1>Your nodes:</h1>
+      </div>
+      <div id="discoveredNodes">
+        <h1>Discovered nodes:</h1>
+      </div>
 
-  <title>WLED companion initialization</title>
-</head>
+      <!-- <h1>Settings</h1>
+      <button id="addManually">Add manually</button>
+      <h1>💾 Existing nodes:</h1>
+      <div id="existingNodes"></div>
+      <h1>✨ Newly discovered nodes:</h1>
 
-<body>
-  <h1>Welcome to WLED companion!</h1>
-  <!-- <button id="startSearching">Send query</button> -->
-  <button id="addManually">Add manually</button>
-  <h1>💾 Your nodes:</h1>
-  <div id="existingNodes"></div>
-  <button id="continue">Save</button>
-  <h1>✨ Discovered nodes:</h1>
+      <button id="continue">Save</button>
 
-  <div id="discoveredNodes"></div>
-  <div class="wrapper">
-    <span class="dot"></span>
-    <div class="dots">
-      <span></span>
-      <span></span>
-      <span></span>
+      <div id="discoveredNodes"></div>
+      <div class="wrapper">
+        <span class="dot"></span>
+        <div class="dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+      <button id="continue">Continue</button> -->
     </div>
-  </div>
-  <script src="./initialConfigRenderer.js"></script>
-</body>
-
+    <script src="./configRenderer.js"></script>
+  </body>
 </html>

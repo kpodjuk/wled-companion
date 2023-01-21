@@ -3,10 +3,10 @@
 // to build:
 // npm install --save-1 @electron-forge/cli
 // npx electron-forge import
-// electron-forge make
+// npm run-script make
 
 // constant parameters
-const DEBUGENABLED = true; // is application debug enabled?
+const DEBUGENABLED = false; // is application debug enabled?
 
 // Modules to control application life and create native browser window
 const { app, BrowserWindow } = require("electron");
@@ -34,29 +34,29 @@ app.setUserTasks([
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-
-
-
   applicationInit();
 
   // read config file
   let currentConfig = configFileHandler.readConfigFile();
 
   if (currentConfig == "") {
-    console.log("First config hasn't been done yet, showing config window!".magenta);
+    console.log(
+      "First config hasn't been done yet, showing config window!".magenta
+    );
     createWindow();
     // initialize mdns for discovery of nodes
     mdnsHandler.init();
   } else {
-    // console.log("app.whenReady(): loaded data from existing config!".magenta);
+    console.log("app.whenReady(): loaded data from existing config!".magenta);
     // build tray context menu
     trayIconHandler.passNodeList(currentConfig.foundNodes);
-    console.log("app.whenReady(): Building context menu from existig config, nodes: ".magenta);
+    console.log(
+      "app.whenReady(): Building context menu from existig config, nodes: "
+        .magenta
+    );
     console.log(currentConfig.foundNodes);
     trayIconHandler.init();
-
   }
-
 });
 
 // global window var
@@ -64,13 +64,31 @@ var mainWindow;
 
 const createWindow = () => {
   // Create the browser window.
+  let width, height;
+  if (DEBUGENABLED) {
+    // make the window wider so devtools fit
+    width = 1700;
+    height = 1200;
+  } else {
+    width = 1200;
+    height = 1200;
+  }
+
   mainWindow = new BrowserWindow({
-    width: 1300,
-    height: 900,
+    // for normal usage: 1200x1200
+    width: width,
+    height: height,
+    frame: false,
+    titleBarStyle: "hidden",
+    titleBarOverlay: {
+      color: "#6b6b6b",
+      symbolColor: "#74b1be",
+      height: 10,
+    },
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
-    resizable: true,
+    resizable: false,
     fullscreenable: false,
     maximizable: false,
     // minimizable: false
@@ -97,12 +115,9 @@ const createWindow = () => {
 
     return false;
   });
-
-}
-
+};
 
 const applicationInit = () => {
-
   // this handler is activated after initial config is done and nodes found
   ipcMain.handle("proceedWithFoundModules", () => {
     console.log("proceedWithFoundModules(): continue button pressed".blue);
@@ -113,9 +128,9 @@ const applicationInit = () => {
 
     // save found nodes in config, but only those that are present on "your nodes" list
     let config = {
-      foundNodes: mdnsHandler.returnDetectedDevices()
+      foundNodes: mdnsHandler.returnDetectedDevices(),
       // initialConfigDone: true
-    }
+    };
     configFileHandler.writeConfigFile(config);
 
     // Close window, configuration done
@@ -125,12 +140,8 @@ const applicationInit = () => {
     mdnsHandler.stopAwaitingResponses();
   });
 
-
-  ipcMain.on('send-desired-nodes', handleNodeSaving);
-
-
+  ipcMain.on("send-desired-nodes", handleNodeSaving);
 };
-
 
 function handleNodeSaving(event, nodes) {
   console.log("Got node list from renderer " + nodes);
@@ -142,6 +153,8 @@ function handleNodeSaving(event, nodes) {
 
 // frontend requests handlers
 ipcMain.handle("getDiscoveredNodes", () => mdnsHandler.returnDetectedDevices());
-ipcMain.handle("getDiscoveredNodesWithNames", () => mdnsHandler.returnDetectedDevicesWithNames());
+ipcMain.handle("getDiscoveredNodesWithNames", () =>
+  mdnsHandler.returnDetectedDevicesWithNames()
+);
 ipcMain.handle("getExistingNodes", () => configFileHandler.readConfigFile());
 ipcMain.handle("startSearching", () => mdnsHandler.startSearching());

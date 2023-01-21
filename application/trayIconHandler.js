@@ -106,7 +106,9 @@ var populateContextMenu = function (allNodes, tray) {
             function (error, response, body) {
               if (error) throw error;
               if (!error && response.statusCode == 200) {
-                console.log("200 Changed synchronization option".green);
+                console.log(
+                  "200 Changed synchronization option request address: ".green
+                );
               }
             }
           );
@@ -374,7 +376,7 @@ var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
       }
 
       if (!error && response.statusCode == 200) {
-        // console.log("Got answer on first GET on address: ".green + this.host);
+        console.log("Got answer on first GET on address: ".green + this.host);
 
         const jsonObject = JSON.parse(body);
         nodesInfoArray.push({
@@ -440,8 +442,8 @@ var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
                   }
                 }
 
-                // console.log(("Done preset array for " + node.address).yellow);
-                // console.log(presetArray);
+                console.log(("Done preset array for " + node.address).yellow);
+                console.log(presetArray);
 
                 // add preset array to node object
                 node.avaliablePresets = presetArray;
