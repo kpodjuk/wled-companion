@@ -1,7 +1,8 @@
 :root {
-    /* --discoveryDotsColor: rgb(0, 255, 89); */
-    /* --discoveryDotsColor: rgb(0 30 78); */
-    --discoveryDotsColor: rgb(0 0 0);
+    --borderColor: rgb(104 104 104);
+    --borderBlurRadius: 30px;
+    --borderSpreadRadius: 1px;
+    --moduleBlur: 15px; /* blur behind each module div */
 }
 
 
@@ -18,7 +19,7 @@
     align-items:center;
     justify-content: space-between;
 
-    box-shadow: 0px 0px 18px #ffff947a;
+    box-shadow: 0px 0px var(--moduleBlur) #ffff947a;
     margin-top: 10px;
 }
 
@@ -50,7 +51,7 @@
     justify-content: space-between;
 
 
-    box-shadow: 0px 0px 18px #1282f87a;
+    box-shadow: 0px 0px var(--moduleBlur) #1282f87a;
     margin-top: 10px;
 
 
@@ -76,34 +77,45 @@ h1 {
 }
 
 #yourNodes {
-    border-right-style: dashed;
-    border-right-color: #6e6e6e;
-    border-right-width: 0.5px;
+    /* border-right-style: dashed; */
+    /* border-right-color: #6e6e6e; */
+    /* border-right-width: 0.5px; */
 
     width:50%;
     padding:50px;
     flex-direction: column;
     justify-content: left;
     display: flex;
+
+
+    
+    /* offset-x | offset-y | blur-radius | spread-radius | color */
+    /* box-shadow: 5px 60px var(--borderBlurRadius) var(--borderSpreadRadius) var(--borderColor); */
+
 }
 
 #discoveredNodes {
-    border-left-style: dashed;
-    border-left-color: #6e6e6e;
-    border-left-width: 0.5px;
+    /* border-left-style: dashed; */
+    /* border-left-color: #6e6e6e; */
+    /* border-left-width: 0.5px; */
 
     width:50%;
     padding:50px;
     flex-direction: column;
     justify-content: left;
     display: flex;
+
+
+    /* offset-x | offset-y | blur-radius | spread-radius | color */
+    /* box-shadow: -5px 60px var(--borderBlurRadius) var(--borderSpreadRadius) var(--borderColor); */
 
 }
 ::-webkit-scrollbar {
     display: none;
 }
 .container {
-    height:1180px; /* 40 px less than window height */
+    height:900px; /* 20 px less than window height becuse of title bar */
+    /* and another 300px less, because of logoContainer */
     display: flex; /* or inline-flex */
     /* flex-wrap: nowrap; */
     flex-direction: row;
@@ -128,6 +140,13 @@ body{
     /* align-items: center; */
     /* height: 100vh; */
     background: #222222;
+
+    /* berly visible gradient */
+    /* background: linear-gradient(141deg, rgb(60 60 60) 0%, rgb(72 72 84) 35%, rgb(67 70 70) 100%); */
+    
+    /* yellow on left, blue on right */
+    /* background: linear-gradient(90deg, rgb(28 26 10) 0%, rgb(52 52 52) 50%, rgb(19 27 36) 100%); */
+
     font-family: 'Raleway', sans-serif;
     font-weight: bold;
     color: rgb(238, 238, 238);
@@ -281,4 +300,21 @@ a span:nth-child(4){
     50%,100%{
         bottom: 100%;
     }
+}
+
+/* To disable antialising when scaling images */
+img { 
+    image-rendering: optimizeSpeed;             /* STOP SMOOTHING, GIVE ME SPEED  */
+    image-rendering: -moz-crisp-edges;          /* Firefox                        */
+    image-rendering: -o-crisp-edges;            /* Opera                          */
+    image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
+    image-rendering: pixelated;                 /* Universal support since 2021   */
+    image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
+
+}
+
+.logoContainer {
+    display:flex;
+    justify-content: center;
 }
