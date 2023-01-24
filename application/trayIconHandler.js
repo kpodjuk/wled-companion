@@ -303,51 +303,6 @@ var populateContextMenu = function (allNodes, tray) {
     enabled: false,
   });
 
-  // add optional settings, probably only useful for me
-  if (irBulbsInContextMenu) {
-    menuTemplate.unshift(
-      { type: "separator" },
-      {
-        label: "Żarówki",
-        type: "submenu",
-        submenu: [
-          {
-            label: "🔵 Niebieski ",
-            type: "normal",
-            click() {
-              sendIrCommand("07");
-            },
-          },
-          {
-            label: "🔴 Czerwony",
-            type: "normal",
-            click() {
-              sendIrCommand("05");
-            },
-          },
-          {
-            label: "🟡 Żółty",
-            type: "normal",
-            click() {
-              sendIrCommand("13");
-            },
-          },
-          // { label: '🔴 ', type: 'normal' },
-          { type: "separator" },
-          { label: "⚡ Wyłącz", type: "normal" },
-          { label: "⚡ Włącz", type: "normal" },
-          { type: "separator" },
-          { label: "🌕 Jaśniej", type: "normal" },
-          { label: "🌒 Ciemniej", type: "normal" },
-          // sendIrCommand('red')
-        ],
-      }
-    );
-  }
-  if (motionSensingContextMenu) {
-    // code for motion sensing checkbox here...
-  }
-
   // all done, apply prepared menu template to tray
   const contextMenu = Menu.buildFromTemplate(menuTemplate);
   tray.setContextMenu(contextMenu);
@@ -465,20 +420,6 @@ var askAllNodesForInfoAndUpdateContextMenu = function (adressList = [], tray) {
       }
     });
   }
-};
-
-var sendIrCommand = function (command) {
-  // POST  http://192.168.1.41/json/si -d '{"bulbCommand": "04", "v":true}' -H "Content-Type: application/json"
-
-  request.post(
-    "http://192.168.1.41/json/si",
-    { json: { bulbCommand: command } },
-    function (error, response, body) {
-      if (error) throw error;
-      if (!error && response.statusCode == 200) {
-      }
-    }
-  );
 };
 
 module.exports = {

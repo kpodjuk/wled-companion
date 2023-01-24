@@ -5,6 +5,11 @@
     --moduleBlur: 15px; /* blur behind each module div */
 }
 
+.module {
+    /* opacity:0; */
+    border-radius: 10px;
+    animation: 2s fadeModuleIntoContainer;
+}
 
 #yourNodes > .module {
     display:flex;
@@ -150,6 +155,9 @@ body{
     font-family: 'Raleway', sans-serif;
     font-weight: bold;
     color: rgb(238, 238, 238);
+    -webkit-app-region: drag;
+    user-select: none;
+
 }
 a{
     position: relative;
@@ -164,8 +172,12 @@ a{
     overflow: hidden;
     /* margin-right: 50px; */
     cursor: pointer;
-   
 }
+
+a:not(.buttonSpinner){
+    -webkit-app-region: no-drag;
+}
+
 a:hover:not(a.buttonSpinner){
     background: #03e9f4;
     color: #050801;
@@ -303,7 +315,7 @@ a span:nth-child(4){
 }
 
 /* To disable antialising when scaling images */
-img { 
+.logoContainer  > img { 
     image-rendering: optimizeSpeed;             /* STOP SMOOTHING, GIVE ME SPEED  */
     image-rendering: -moz-crisp-edges;          /* Firefox                        */
     image-rendering: -o-crisp-edges;            /* Opera                          */
@@ -311,11 +323,24 @@ img {
     image-rendering: pixelated;                 /* Universal support since 2021   */
     image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
     -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
-
 }
 
 .logoContainer {
     display:flex;
     justify-content: center;
-    padding-top: 20px;
+    padding-top: 35px;
 }
+
+
+/* fade in animation */
+@keyframes fadeModuleIntoContainer {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+
+}
+
+

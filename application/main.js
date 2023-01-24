@@ -139,17 +139,7 @@ const applicationInit = () => {
     // turn off mdns answers listening
     mdnsHandler.stopAwaitingResponses();
   });
-
-  ipcMain.on("send-desired-nodes", handleNodeSaving);
 };
-
-function handleNodeSaving(event, nodes) {
-  console.log("Got node list from renderer " + nodes);
-
-  // const webContents = event.sender
-  // const win = BrowserWindow.fromWebContents(webContents)
-  // win.setTitle(title)
-}
 
 // frontend requests handlers
 ipcMain.handle("getDiscoveredNodes", () => mdnsHandler.returnDetectedDevices());

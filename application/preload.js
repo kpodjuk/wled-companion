@@ -7,15 +7,12 @@ contextBridge.exposeInMainWorld("versions", {
   electron: () => process.versions.electron,
 
   getDiscoveredNodes: () => ipcRenderer.invoke("getDiscoveredNodes"),
-  getDiscoveredNodesWithNames: () => ipcRenderer.invoke("getDiscoveredNodesWithNames"),
+  getDiscoveredNodesWithNames: () =>
+    ipcRenderer.invoke("getDiscoveredNodesWithNames"),
   getExistingNodes: () => ipcRenderer.invoke("getExistingNodes"),
   startSearching: () => ipcRenderer.invoke("startSearching"),
   proceedWithFoundModules: () => ipcRenderer.invoke("proceedWithFoundModules"),
 });
-
-contextBridge.exposeInMainWorld('electronAPI', {
-  sendDesiredNodes: (nodes) => ipcRenderer.send('send-desired-nodes', nodes)
-})
 
 // All of the Node.js APIs are available in the preload process.
 // It has the same sandbox as a Chrome extension.

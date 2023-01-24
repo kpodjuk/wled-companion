@@ -10,6 +10,7 @@ module.exports = {
       console.log("readConfigFile(): Error while reading config file: ".red);
       console.log(e);
       if (e.errno == -4058) {
+        // -4058 = file does not exist
         console.log("readConfigFile(): Config file doesn't exist!: ".magenta);
       } else {
       }

@@ -1,6 +1,6 @@
 const getDetectedNodesRefreshIntervalMs = 5000;
 
-// even listeners for buttons
+// event listeners for buttons
 document.addEventListener("click", (e) => {
   console.log("ClickHandler: " + e.target.id);
   if (e.target.id == "buttonContinue") {
@@ -8,19 +8,20 @@ document.addEventListener("click", (e) => {
     proceedWithFoundModules();
   } else if (e.target.id.startsWith("deleteNode")) {
     console.log("Deleting node with id: " + e.target.id);
-    deleteNode(e.target.id.slice(10));
+    deleteNodeFromYourNodes(e.target.id.slice(10));
   } else if (e.target.id.startsWith("addNode")) {
     console.log("Adding node with id: " + e.target.id);
     address = e.target.id.slice(7);
     // change text on button of newly added node
     document.getElementById("addNode" + address).innerHTML = "ADDED";
-    addNode(address);
+    addNodeToYourNodes(address);
   }
 });
 
 const getDiscoveredNodes = async () => {
   // get discovered nodes from backend
-  const response = await window.versions.getDiscoveredNodes();
+  // const response = await window.versions.getDiscoveredNodes();
+  response = ["test1", "test2", "test3"];
   console.log("getDiscoveredNodes():");
   console.log(response);
   if (response.length == 0) {
@@ -35,10 +36,10 @@ const getDiscoveredNodes = async () => {
       ) {
         // not on the list, printing
         document.getElementById("discoveredNodes").innerHTML +=
-          "<div id='" +
+          "<div id='discoveredNodes:" +
           element +
           "' class='module'>" +
-          "<div class='yourNodesNodeAddressContainer'>🔎  " +
+          "<div class='discoveredNodeAddressContainer'>🔎  " +
           element +
           "</div><a id='addNode" +
           element +
@@ -76,7 +77,7 @@ const getDiscoveredNodes = async () => {
   }
 };
 
-var getDetectedDevicesInterval = window.setInterval(() => {
+var getDiscoveredNodesInterval = window.setInterval(() => {
   getDiscoveredNodes();
 }, getDetectedNodesRefreshIntervalMs);
 
@@ -108,63 +109,71 @@ const getExistingNodes = async () => {
   }
 };
 
-const addNode = async (nodeAddress) => {
+const appendContinueButton = async () => {
+  // you can only continue if there's at least one node on the list
+  if (
+    document.getElementsByClassName("yourNodesNodeAddressContainer").length > 0
+  ) {
+    // you are supposed to add it, but first check if it's not already there
+    if (document.getElementById("continueContainer") == null) {
+      // case: it's not exisitng at all, append it
+      document.getElementById("yourNodes").innerHTML +=
+        "<div id='continueContainer' class='continueContainer'>\
+        <a class='buttonContinue' id='buttonContinue'>\
+        Continue</a></div>";
+    } else if (
+      // case: it's existing but not at the very bottom
+      document.getElementById("yourNodes").lastChild.id !=
+        "continueContainer" &&
+      document.getElementById("continueContainer") != null
+    ) {
+      // remove old continue buttion
+      document.getElementById("continueContainer").remove();
+
+      // append new continue button at the end
+      document.getElementById("yourNodes").innerHTML +=
+        "<div id='continueContainer' class='continueContainer'>\
+        <a class='buttonContinue' id='buttonContinue'>\
+        Continue</a></div>";
+    }
+  }
+};
+
+const addNodeToYourNodes = async (nodeAddress) => {
   console.log("addNode(): " + nodeAddress);
   // make sure it isn't already on the list and add it if it's not
   if (
     document.getElementById("yourNodes").innerHTML.search(nodeAddress) == -1
   ) {
-    let htmlToPrint =
-      "<div id='" +
-      nodeAddress +
-      "' class='module'>" +
+    // let htmlToPrint =
+    //   "<div id='yourNodes:" +
+    //   nodeAddress +
+    //   "' class='module'>" +
+    //   "<div class='yourNodesNodeAddressContainer'>💡  " +
+    //   nodeAddress +
+    //   "</div><a id='deleteNode" +
+    //   nodeAddress +
+    //   "' class='buttonRemoveYourNodes' >REMOVE</a>";
+    // document.getElementById("yourNodes").innerHTML += htmlToPrint;
+
+    let nodeContainer = document.createElement("div");
+    nodeContainer.id = "yourNodes:" + nodeAddress;
+    nodeContainer.classList = "module";
+    nodeContainer.innerHTML =
       "<div class='yourNodesNodeAddressContainer'>💡  " +
       nodeAddress +
       "</div><a id='deleteNode" +
       nodeAddress +
-      "' class='buttonRemoveYourNodes'>REMOVE</a>";
-    document.getElementById("yourNodes").innerHTML += htmlToPrint;
+      "' class='buttonRemoveYourNodes' >REMOVE</a>";
+
+    document.getElementById("yourNodes").appendChild(nodeContainer);
 
     // add continue button at the bottom
-    // you can only continue if there's at least one node on the list
-    if (
-      document.getElementsByClassName("yourNodesNodeAddressContainer").length >
-      0
-    ) {
-      // you are supposed to add it, but first check if it's not already there
-      if (
-        "continueContainer" &&
-        document.getElementById("continueContainer") == null
-      ) {
-        // case: it's not exisitng at all, append it
-        document.getElementById("yourNodes").innerHTML =
-          document.getElementById("yourNodes").innerHTML +
-          "<div id='continueContainer' class='continueContainer'>\
-      <a class='buttonContinue' id='buttonContinue'>\
-      Continue</a></div>";
-      } else if (
-        // case: it's existing but not at the very bottom
-        document.getElementById("yourNodes").lastChild.id !=
-          "continueContainer" &&
-        document.getElementById("continueContainer") != null
-      ) {
-        // remove old continue buttion
-        document.getElementById("continueContainer").remove();
-
-        // append new continue button at the end
-        document.getElementById("yourNodes").innerHTML =
-          document.getElementById("yourNodes").innerHTML +
-          "<div id='continueContainer' class='continueContainer'>\
-      <a class='buttonContinue' id='buttonContinue'>\
-      Continue</a></div>";
-      }
-    }
+    // appendContinueButton();
   }
 };
 
-const startSearching = async () => {
-  const reponse = await window.versions.startSearching();
-};
+addNodeToYourNodes("test");
 
 const proceedWithFoundModules = async () => {
   if (document.getElementById("discoveredNodes").innerHTML == "") {
@@ -176,19 +185,23 @@ const proceedWithFoundModules = async () => {
   }
 };
 
-const deleteNode = async (nodeAddress) => {
+const deleteNodeFromYourNodes = async (nodeAddress) => {
   console.log("deleteNode(): deleting node with address:" + nodeAddress);
   // remove node from address list
-  document.getElementById(nodeAddress).remove();
+  document.getElementById("yourNodes:" + nodeAddress).remove();
   // remove continue button if there's no nodes left on the list
   if (
-    document.getElementsByClassName("yourNodesNodeAddressContainer").length > 0
+    document.getElementsByClassName("yourNodesNodeAddressContainer").length == 0
   ) {
     document.getElementById("continueContainer").remove();
   }
 };
 
-getExistingNodes(); // get already existing nodes from config file during window creation
+const startSearching = async () => {
+  const reponse = await window.versions.startSearching();
+};
+
+// getExistingNodes(); // get already existing nodes from config file during window creation
 
 // ################################### for debug ###################################
 // addNode("1.1.1.1");
