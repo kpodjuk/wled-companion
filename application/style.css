@@ -8,7 +8,8 @@
 .module {
     /* opacity:0; */
     border-radius: 10px;
-    animation: 2s fadeModuleIntoContainer;
+    animation: 1s fadeModuleIntoContainer;
+
 }
 
 #yourNodes > .module {
@@ -40,6 +41,8 @@
     align-items:center;
     justify-content: center;
     margin-top:25px;
+    animation: 1s fadeModuleIntoContainer;
+
 }
 
 
@@ -75,6 +78,8 @@
     align-items:center;
     justify-content: center;
     margin-top:25px;
+    animation: 1s fadeModuleIntoContainer;
+
 }
 
 h1 {
@@ -92,6 +97,7 @@ h1 {
     justify-content: left;
     display: flex;
 
+    animation: 1s fadeModuleIntoContainer;
 
     
     /* offset-x | offset-y | blur-radius | spread-radius | color */
@@ -110,6 +116,7 @@ h1 {
     justify-content: left;
     display: flex;
 
+    animation: 1s fadeModuleIntoContainer;
 
     /* offset-x | offset-y | blur-radius | spread-radius | color */
     /* box-shadow: -5px 60px var(--borderBlurRadius) var(--borderSpreadRadius) var(--borderColor); */

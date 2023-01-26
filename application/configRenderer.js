@@ -35,15 +35,17 @@ const getDiscoveredNodes = async () => {
         -1
       ) {
         // not on the list, printing
-        document.getElementById("discoveredNodes").innerHTML +=
-          "<div id='discoveredNodes:" +
-          element +
-          "' class='module'>" +
-          "<div class='discoveredNodeAddressContainer'>🔎  " +
+        let nodeContainer = document.createElement("div");
+        nodeContainer.id = "discoveredNodes:" + element;
+        nodeContainer.classList = "module";
+        nodeContainer.innerHTML =
+          "<div class='discoveredNodeAddressContainer'>💡  " +
           element +
           "</div><a id='addNode" +
           element +
-          "' class='buttonAddDiscovered'>SAVE</a>";
+          "' class='buttonAddDiscovered' >SAVE</a>";
+
+        document.getElementById("discoveredNodes").appendChild(nodeContainer);
       }
     });
     // add that spinning thingy and the end to show user it's discovering right now
@@ -52,12 +54,14 @@ const getDiscoveredNodes = async () => {
       "spinnerContainer" &&
       document.getElementById("spinnerContainer") == null
     ) {
-      // case: it's not exisitng at all, append it
-      document.getElementById("discoveredNodes").innerHTML =
-        document.getElementById("discoveredNodes").innerHTML +
-        "<div id='spinnerContainer' class='spinnerContainer'>\
-      <a class='buttonSpinner'><span></span><span></span><span></span><span></span>\
-      Discovering...</a></div>";
+      // case: it's not existing at all, append it
+      let element = document.createElement("div");
+      element.id = "spinnerContainer";
+      element.classList.add("spinnerContainer");
+      element.innerHTML =
+        "<a class='buttonSpinner'><span></span><span></span><span></span><span></span>\
+      Discovering...</a>";
+      document.getElementById("discoveredNodes").appendChild(element);
     } else if (
       // case: it's existing but not at the very bottom
       document.getElementById("discoveredNodes").lastChild.id !=
@@ -68,11 +72,13 @@ const getDiscoveredNodes = async () => {
       document.getElementById("spinnerContainer").remove();
 
       // append new spinner at the end
-      document.getElementById("discoveredNodes").innerHTML =
-        document.getElementById("discoveredNodes").innerHTML +
-        "<div id='spinnerContainer' class='spinnerContainer'>\
-      <a class='buttonSpinner'><span></span><span></span><span></span><span></span>\
-      Discovering...</a></div>";
+      let element = document.createElement("div");
+      element.id = "spinnerContainer";
+      element.classList.add("spinnerContainer");
+      element.innerHTML =
+        "<a class='buttonSpinner'><span></span><span></span><span></span><span></span>\
+      Discovering...</a>";
+      document.getElementById("discoveredNodes").appendChild(element);
     }
   }
 };
@@ -116,11 +122,14 @@ const appendContinueButton = async () => {
   ) {
     // you are supposed to add it, but first check if it's not already there
     if (document.getElementById("continueContainer") == null) {
+      let element = document.createElement("div");
       // case: it's not exisitng at all, append it
-      document.getElementById("yourNodes").innerHTML +=
-        "<div id='continueContainer' class='continueContainer'>\
-        <a class='buttonContinue' id='buttonContinue'>\
-        Continue</a></div>";
+      element.id = "continueContainer";
+      element.classList.add("continueContainer");
+      element.innerHTML =
+        "<a class='buttonContinue' id='buttonContinue'>\
+      Continue</a>";
+      document.getElementById("yourNodes").appendChild(element);
     } else if (
       // case: it's existing but not at the very bottom
       document.getElementById("yourNodes").lastChild.id !=
@@ -129,12 +138,13 @@ const appendContinueButton = async () => {
     ) {
       // remove old continue buttion
       document.getElementById("continueContainer").remove();
-
-      // append new continue button at the end
-      document.getElementById("yourNodes").innerHTML +=
-        "<div id='continueContainer' class='continueContainer'>\
-        <a class='buttonContinue' id='buttonContinue'>\
-        Continue</a></div>";
+      let element = document.createElement("div");
+      element.id = "continueContainer";
+      element.classList.add("continueContainer");
+      element.innerHTML =
+        "<a class='buttonContinue' id='buttonContinue'>\
+      Continue</a>";
+      document.getElementById("yourNodes").appendChild(element);
     }
   }
 };
@@ -169,7 +179,7 @@ const addNodeToYourNodes = async (nodeAddress) => {
     document.getElementById("yourNodes").appendChild(nodeContainer);
 
     // add continue button at the bottom
-    // appendContinueButton();
+    appendContinueButton();
   }
 };
 
