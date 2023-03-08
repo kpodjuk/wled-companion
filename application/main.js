@@ -9,15 +9,16 @@
 const DEBUGENABLED = false; // is application debug enabled?
 
 // Modules to control application life and create native browser window
-const { app, BrowserWindow } = require("electron");
-const colors = require("colors");
-require("electron").Menu.setApplicationMenu(null); // disable menu at the top of the window
-const { ipcMain } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain } = require("electron");
 const path = require("path");
-// my modules:
+// application modules:
 const trayIconHandler = require("./trayIconHandler.js");
 const mdnsHandler = require("./mdnsHandler.js");
 const configFileHandler = require("./configFileHandler.js");
+const { fdatasyncSync } = require("original-fs");
+
+// global window var
+var mainWindow;
 
 app.setUserTasks([
   {
@@ -34,7 +35,8 @@ app.setUserTasks([
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  applicationInit();
+
+  Menu.setApplicationMenu(null); // disable menu at the top of the window
 
   // read config file
   let currentConfig = configFileHandler.readConfigFile();
@@ -59,8 +61,6 @@ app.whenReady().then(() => {
   }
 });
 
-// global window var
-var mainWindow;
 
 const createWindow = () => {
   // Create the browser window.
@@ -117,34 +117,31 @@ const createWindow = () => {
   });
 };
 
-const applicationInit = () => {
-  // this handler is activated after initial config is done and nodes found
-  ipcMain.handle("proceedWithFoundModules", () => {
-    console.log("proceedWithFoundModules(): continue button pressed".blue);
-
-    // build tray context menu
-    trayIconHandler.passNodeList(mdnsHandler.returnDetectedDevices());
-    trayIconHandler.init();
-
-    // save found nodes in config, but only those that are present on "your nodes" list
-    let config = {
-      foundNodes: mdnsHandler.returnDetectedDevices(),
-      // initialConfigDone: true
-    };
-    configFileHandler.writeConfigFile(config);
-
-    // Close window, configuration done
-    mainWindow.close();
-
-    // turn off mdns answers listening
-    mdnsHandler.stopAwaitingResponses();
-  });
-};
 
 // frontend requests handlers
 ipcMain.handle("getDiscoveredNodes", () => mdnsHandler.returnDetectedDevices());
-ipcMain.handle("getDiscoveredNodesWithNames", () =>
-  mdnsHandler.returnDetectedDevicesWithNames()
-);
+ipcMain.handle("getDiscoveredNodesWithNames", () => mdnsHandler.returnDetectedDevicesWithNames());
 ipcMain.handle("getExistingNodes", () => configFileHandler.readConfigFile());
 ipcMain.handle("startSearching", () => mdnsHandler.startSearching());
+
+ipcMain.handle("proceedWithFoundModules", () => {
+  // this handler is activated after initial config is done and nodes found
+  console.log("proceedWithFoundModules(): continue button pressed".blue);
+
+  // build tray context menu
+  trayIconHandler.passNodeList(mdnsHandler.returnDetectedDevices());
+  trayIconHandler.init();
+
+  // save found nodes in config, but only those that are present on "your nodes" list
+  let config = {
+    foundNodes: mdnsHandler.returnDetectedDevices(),
+    // initialConfigDone: true
+  };
+  configFileHandler.writeConfigFile(config);
+
+  // Close window, configuration done
+  mainWindow.close();
+
+  // turn off mdns answers listening
+  mdnsHandler.stopAwaitingResponses();
+});

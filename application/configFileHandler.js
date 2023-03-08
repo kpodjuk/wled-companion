@@ -1,6 +1,7 @@
 const fs = require("fs");
 
 module.exports = {
+  
   readConfigFile: () => {
     let configFile;
 
@@ -14,10 +15,8 @@ module.exports = {
         console.log("readConfigFile(): Config file doesn't exist!: ".magenta);
       } else {
       }
-
       return "";
     }
-
     console.log(
       "readConfigFile(): Reading config file succesful!, contents: ".green
     );

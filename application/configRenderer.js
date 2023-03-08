@@ -1,10 +1,17 @@
 const getDetectedNodesRefreshIntervalMs = 5000;
 
+var getDiscoveredNodesInterval = window.setInterval(() => {
+  getDiscoveredNodes();
+}, getDetectedNodesRefreshIntervalMs);
+
+// do first getDetectedDevicesInterval immidietly so buttonSpinner is shown witout delay
+getDiscoveredNodes();
+
 // event listeners for buttons
 document.addEventListener("click", (e) => {
   console.log("ClickHandler: " + e.target.id);
   if (e.target.id == "buttonContinue") {
-    console.log("proceedWithFoundModules(): continue button pressed".green);
+    console.log("Continue button pressed".green);
     proceedWithFoundModules();
   } else if (e.target.id.startsWith("deleteNode")) {
     console.log("Deleting node with id: " + e.target.id);
@@ -13,7 +20,6 @@ document.addEventListener("click", (e) => {
     console.log("Adding node with id: " + e.target.id);
     address = e.target.id.slice(7);
     // change text on button of newly added node
-    document.getElementById("addNode" + address).innerHTML = "ADDED";
     addNodeToYourNodes(address);
   }
 });
@@ -83,13 +89,6 @@ const getDiscoveredNodes = async () => {
   }
 };
 
-var getDiscoveredNodesInterval = window.setInterval(() => {
-  getDiscoveredNodes();
-}, getDetectedNodesRefreshIntervalMs);
-
-// do first getDetectedDevicesInterval immidietly so buttonSpinner is shown witout delay
-getDiscoveredNodes();
-
 const getExistingNodes = async () => {
   response = await window.versions.getExistingNodes();
   // reponse is whole config file, only adresses are needed here
@@ -155,16 +154,6 @@ const addNodeToYourNodes = async (nodeAddress) => {
   if (
     document.getElementById("yourNodes").innerHTML.search(nodeAddress) == -1
   ) {
-    // let htmlToPrint =
-    //   "<div id='yourNodes:" +
-    //   nodeAddress +
-    //   "' class='module'>" +
-    //   "<div class='yourNodesNodeAddressContainer'>💡  " +
-    //   nodeAddress +
-    //   "</div><a id='deleteNode" +
-    //   nodeAddress +
-    //   "' class='buttonRemoveYourNodes' >REMOVE</a>";
-    // document.getElementById("yourNodes").innerHTML += htmlToPrint;
 
     let nodeContainer = document.createElement("div");
     nodeContainer.id = "yourNodes:" + nodeAddress;

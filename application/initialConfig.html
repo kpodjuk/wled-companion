@@ -4,18 +4,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
-    />
-    <meta
-      http-equiv="X-Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
-    />
-
     <link rel="stylesheet" type="text/css" href="./style.css" />
-
     <title>WLED companion settings</title>
   </head>
 
@@ -30,25 +19,6 @@
       <div id="discoveredNodes">
         <center><h1>Discovered nodes</h1></center>
       </div>
-
-      <!-- <h1>Settings</h1>
-      <button id="addManually">Add manually</button>
-      <h1>💾 Existing nodes:</h1>
-      <div id="existingNodes"></div>
-      <h1>✨ Newly discovered nodes:</h1>
-
-      <button id="continue">Save</button>
-
-      <div id="discoveredNodes"></div>
-      <div class="wrapper">
-        <span class="dot"></span>
-        <div class="dots">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-      </div>
-      <button id="continue">Continue</button> -->
     </div>
     <script src="./configRenderer.js"></script>
   </body>

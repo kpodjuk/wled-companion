@@ -19,7 +19,7 @@ var mdns = require("multicast-dns")({
   reuseAddr: true, // set the reuseAddr option when creating the socket (requires node >=0.11.13)
 });
 
-var questions = [
+var questionToAsk = [
   {
     name: "_http._tcp",
     type: "A",
@@ -34,8 +34,8 @@ var sendQuery = function () {
   // you don't even have to send queries? Or what?
   // doesn't seem to make a difference on answers I receive
   console.log("sendQuery(): Sending mdns query, with questions: ".blue);
-  console.log(jsonPrint(questions));
-  mdns.query(questions);
+  console.log(jsonPrint(questionToAsk));
+  mdns.query(questionToAsk);
 };
 
 // at this point - strong suspicion that it's WLED, send get request
@@ -69,9 +69,8 @@ module.exports = {
 
   init: function () {
     // handle responses
-    mdns.on("response", function (response) {
+    mdns.on("response", function handleResponses(response) {
       console.log("-------------------------------------------------------");
-      // console.log("Got MDNS response!"); // log answers here
       console.log("Got MDNS response!, answers: ");
       console.log(response.answers);
 
@@ -87,7 +86,8 @@ module.exports = {
           "mdnsResponseHandler(): Detected IP: ".green +
             jsonPrint(response.answers[0].data)
         );
-        // before sending request, make sure it's not already on the list, doesn't make sense to bother it again
+        // before sending request, make sure it's not already on the list
+        // no confirming needed in that case
         if (!foundWLEDDevices.includes(response.answers[0].data)) {
           console.log(
             "mdnsResponseHandler() Not on the list! Have to send request".green
